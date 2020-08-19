@@ -1,6 +1,12 @@
+"""
+PYthon Programmable Gate Array
+"""
 import io
 import pyrtl
     
+
+__version__ = "0.1.0" 
+
 
 class ReadWriteRegister(pyrtl.Register):
     def __init__(self, bitwidth=None, read_only=False):

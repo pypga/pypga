@@ -1,61 +1,11 @@
-[project]
-name = "pypga"
-version = "0.1.0"
-description = "PYthon Programmable Gate Array - write and control FPGAs with Python."
-authors = [
-    "Leonhard Neuhaus <info@pypga.org>"
-]
-license = "MIT"
-readme = "README.md"
-python = "^3.6"
-homepage = "http://www.pypga.org"
-repository = "https://github.com/pypga/pypga"
-documentation = "https://github.com/pypga/pypga"
-
-keywords = ["FPGA", "Verilog", "pyrtl", "DSP", "Python", "hardware", "gate"]
-
-classifiers = [
-    "Topic :: Software Development"
-]
-
-# Requirements
-[dependencies]
-Click = "^7.0"
-
-[dev-dependencies]
-black = { version = "^18.3-alpha.0", python = "^3.6" }
-
-[scripts]
-poetry = "infer_pyproject.cli:main"
-
 [build-system]
-requires = [
-    "setuptools >= 35.0.2",
-    "setuptools_scm >= 2.0.0, <3"
-]
-build-backend = "setuptools.build_meta"
+requires = ["flit_core >=2,<4"]
+build-backend = "flit_core.buildapi"
 
-[tool.black]
-line-length = 100
-target_version = ['py36']
-include = '\.pyi?$'
-exclude = '''
-
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
-  )/
-  | foo.py           # also separately exclude a file named foo.py in
-                     # the root of the project
-)
-'''
+[tool.flit.metadata]
+module = "pypga"
+author = "Leonhard Neuhaus"
+author-email = "photune.xyz@gmail.com"
+home-page = "http://www.pypga.org"
+classifiers = ["License :: OSI Approved :: MIT License"]
 
