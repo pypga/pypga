@@ -7,46 +7,48 @@ import uuid
 
 
 class Client:
-    def __init__(self, host="192.168.1.0", port=2222, timeout=1.0):
-        self.logger = logging.getLogger(name=f"{__name__}/Client({self})")
+    def __init__(self, token, host="127.0.0.1", port=2222, timeout=1.0):
+        if len(token) != 32:
+            raise ValueError("token must have 32 characters, not {len(token)}.")
+        self._token = token
+        self._host = host
+        self._port = port
+        self._timeout = timeout
         # add a lock for read/write access to the socket to make it threadsafe
         self._socket_lock = threading.Lock()
         # start setting up interface
-        self._timeout = timeout
-        self._hostname = hostname
-        self._port = port
-        self._token = str(uuid.uuid4().hex)
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.settimeout(self._timeout)
-        self._socket.connect((self._hostname, self._port))
-        # send authentification token
-        assert len(self._token) == 32
+        self.start()
+
+    def start(self):
+        self._socket.connect((self._host, self._port))
         self._socket.sendall(str(self._token).encode('ascii'))
         # receive a confirmation token
         data = self._socket.recv(32)
         while (len(data) < 32):
-            data += self._socket.recv(32 - len(data))
+            new = self._socket.recv(32 - len(data))
+            data += new
+            if len(new) == 0:
+                break
         data = data.decode("ascii")
         if data != '1'*32:
             raise RuntimeError(f"Wrong authentification token: {self._token} != {data}. This may mean "
                                f"that another client has connected to your redpitaya. Try restarting.")
         else:
-            self.logger.debug(f"Correct authentification token: {self._token} / {data}")
+            logging.debug(f"Correct authentification token: {self._token} / {data}")
 
-    def close(self):
+    def stop(self):
         try:
             self._socket.send(b"c" + b"\x00"*7)
             self._socket.close()
         except socket.error:
-            self.logger.debug("Error upon closing socket: ", exc_info=True)
+            logging.debug("Error upon closing socket: ", exc_info=True)
 
-    def __del__(self):
-        self.close()
-        
     def reads(self, addr, length):
         if length > 65535:
             length = 65535
-            self.logger.warning("Maximum read-length is %d", length)
+            logging.warning("Maximum read-length is %d", length)
         header = b'r' + bytes(bytearray([0,
                                          length & 0xFF, (length >> 8) & 0xFF,
                                          addr & 0xFF, (addr >> 8) & 0xFF, (addr >> 16) & 0xFF, (addr >> 24) & 0xFF]))
@@ -63,6 +65,7 @@ class Client:
                     finally:
                         raise TimeoutError(f"Read timeout - incomplete data transmission: {data}")
             self._check_acknowledgement(header, ack=data[:8])
+        return np.frombuffer(data[8:], dtype=np.uint32)
 
     def writes(self, addr, values):
         values = values[:65535 - 2]
@@ -95,4 +98,4 @@ class Client:
             total_bytes_cleared += bytes_cleared
             if bytes_cleared <= 0:
                 break
-        self.logger.debug(f"Cleared {total_bytes_cleared} bytes from socket.")
+        logging.debug(f"Cleared {total_bytes_cleared} bytes from socket.")

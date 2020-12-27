@@ -1,0 +1,12 @@
+identifier.address,0x80000000,8,rw
+identifier.data,0x80000004,8,ro
+top.state0,0x80000800,1,rw
+top.state1,0x80000804,32,rw
+top.led0to3_led3_on,0x80000808,1,rw
+top.led0to3_led0_rate,0x8000080c,32,rw
+top.led0to3_led1_rate,0x80000810,32,rw
+top.led0to3_led2_rate,0x80000814,32,rw
+top.led4to7_led3_on,0x80000818,1,rw
+top.led4to7_led0_rate,0x8000081c,32,rw
+top.led4to7_led1_rate,0x80000820,32,rw
+top.led4to7_led2_rate,0x80000824,32,rw

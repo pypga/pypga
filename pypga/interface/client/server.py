@@ -1,112 +1,97 @@
+import logging
 from scp import SCPException
 from paramiko import SSHException
+from time import sleep
+import uuid
+from pathlib import Path
 from .sshshell import SshShell
 
 
 class Server:
-    def __init__(self, host, delay=0.05, fpga_file=None):
+    _servername = "server"
+    _bitstreamname = "bitstream.bin"
+    _srcfiles = list((Path(__file__).parent.resolve() / "server").glob(f"{_servername}_*.*"))
+    _destpath = Path("/root/pypga")
+
+    def run(self, command=""):
+        return self.shell.ask(command)
+
+    def put(self, src, dst):
+        self.shell.scp.put(src, dst)
+
+    def __init__(self, host, port=2222, delay=0.05, bitstreamfile=None, start=True):
         self._delay = delay
-        self.shell = SshShell(hostname=host,
-                              sshport=22,
-                              user="root",
-                              password="root",
-                              scp=True)
-        if fpga_file is not None:
-            self.update_fpga(fpga_file)
-        self.installserver()
+        self.port = port
+        self.shell = SshShell(
+            hostname=host,
+            sshport=22,
+            user="root",
+            password="root",
+            delay=delay,
+        )
+        self.stop()
+        self.run(f"mkdir {self._destpath}")
+        self.run(f"cd {self._destpath}")
+        if bitstreamfile is not None:
+            self.flash_bitstream(bitstreamfile)
+        if start:
+            self.start()
 
-    def update_fpga(self, filename):
-        self.end()
-        sleep(self.parameters['delay'])
-        self.ssh.ask('rw')
-        sleep(self.parameters['delay'])
-        self.ssh.ask('mkdir ' + self.parameters['serverdirname'])
-        sleep(self.parameters['delay'])
-        if source is None or not os.path.isfile(source):
-            if source is not None:
-                self.logger.warning('Desired bitfile "%s" does not exist. Using default file.',
-                                    source)
-            source = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'fpga', 'red_pitaya.bin')
-        if not os.path.isfile(source):
-            raise IOError("Wrong filename",
-              "The fpga bitfile was not found at the expected location. Try passing the arguments "
-              "dirname=\"c://github//pyrpl//pyrpl//\" adapted to your installation directory of pyrpl "
-              "and filename=\"red_pitaya.bin\"! Current dirname: "
-              + self.parameters['dirname'] +
-              " current filename: "+self.parameters['filename'])
-        for i in range(3):
-            try:
-                self.ssh.scp.put(source,
-                             os.path.join(self.parameters['serverdirname'],
-                                          self.parameters['serverbinfilename']))
-            except (SCPException, SSHException):
-                # try again before failing
-                self.start_ssh()
-                sleep(self.parameters['delay'])
-            else:
-                break
-        # kill all other servers to prevent reading while fpga is flashed
-        self.end()
-        self.ssh.ask('killall nginx')
-        self.ssh.ask('systemctl stop redpitaya_nginx') # for 0.94 and higher
-        self.ssh.ask('cat '
-                 + os.path.join(self.parameters['serverdirname'], self.parameters['serverbinfilename'])
-                 + ' > //dev//xdevcfg')
-        sleep(self.parameters['delay'])
-        self.ssh.ask('rm -f '+ os.path.join(self.parameters['serverdirname'], self.parameters['serverbinfilename']))
-        self.ssh.ask("nginx -p //opt//www//")
-        self.ssh.ask('systemctl start redpitaya_nginx')  # for 0.94 and higher #needs test
-        sleep(self.parameters['delay'])
-        self.ssh.ask('ro')
+    def stop(self):
+        self.token = None
+        self.run('\x03')  # exit running server application
+        self.run('killall server')  # make sure no other server blocks the port
 
-    def fpgarecentlyflashed(self):
-        self.ssh.ask()
-        result =self.ssh.ask("echo $(($(date +%s) - $(date +%s -r \""
-        + os.path.join(self.parameters['serverdirname'], self.parameters['serverbinfilename']) +"\")))")
-        age = None
+    @property
+    def bitstream_flashed_recently(self) -> bool:
+        self.run("")  # flush output
+        result = self.run(f"echo $(($(date +%s) - $(date +%s -r \"{self._destpath / self._bitstreamname}\")))")
         for line in result.split('\n'):
-            try:
-                age = int(line.strip())
-            except:
-                pass
-            else:
-                break
-        if not age:
-            self.logger.debug("Could not retrieve bitfile age from: %s",
-                            result)
+            try: age = int(line.strip())
+            except ValueError: pass
+            else: break
+        else:
+            logging.debug(f"Could not retrieve bitstream file age from: {result}")
             return False
-        elif age > 10:
-            self.logger.debug("Found expired bitfile. Age: %s", age)
+        if age > 10:
+            logging.debug(f"Found expired bitstream file with an age of {age} seconds.")
             return False
         else:
-            self.logger.debug("Found recent bitfile. Age: %s", age)
+            logging.debug(f"Found a recent bitstream file with an age of {age} seconds.")
             return True
 
-    def startserver(self):
-        self.endserver()
-        sleep(self.parameters['delay'])
-        if self.fpgarecentlyflashed():
-            self.logger.info("FPGA is being flashed. Please wait for 2 "
-                             "seconds.")
-            sleep(2.0)
-        result = self.ssh.ask(self.parameters['serverdirname'] + "/" + self.parameters['monitor_server_name']
-                              + " " + str(self.parameters['port']) + " " + self.newtoken())
-        if not "sh" in result:  # sh in result means we tried the wrong binary version
-            self.logger.debug("Server application started on port %d",
-                              self.parameters['port'])
-            self._serverrunning = True
-            return self.parameters['port'], self.parameters['token']
-        # something went wrong
-        return self.installserver()
+    def flash_bitstream(self, filename: str):
+        destpath = str(self._destpath / self._bitstreamname)
+        self.put(filename, destpath)
+        self.stop()
+        self.run("killall nginx")
+        self.run("systemctl stop redpitaya_nginx")
+        self.run(f"cat {destpath} > //dev//xdevcfg")
+        self.shell.ask(f"m -f {destpath}")  # clean up the bitstream
 
-    def endserver(self):
-        try:
-            self.ssh.ask('\x03')  # exit running server application
-        except:
-            self.logger.exception("Server not responding...")
-        if 'pitaya' in self.ssh.ask():
-            self.logger.debug('>')  # formerly 'console ready'
-        sleep(self.parameters['delay'])
-        # make sure no other pyrpl_server blocks the port
-        self.ssh.ask('killall ' + self.parameters['monitor_server_name'])
-        self._serverrunning = False
+    def generate_new_token(self) -> str:
+        self.token = str(uuid.uuid4().hex)
+        return self.token
+
+    def start(self) -> str:
+        if self.bitstream_flashed_recently:
+            logging.info("FPGA is being flashed. Waiting for 2 seconds.")
+            sleep(2.0)
+        destpath = str(self._destpath / "server")
+        for serverfile in self._srcfiles:
+            try:
+                self.shell.scp.put(serverfile, destpath)
+            except (SCPException, SSHException):
+                logging.warning("Upload error.", exc_info=True)
+            self.run(f'chmod 755 {destpath}')
+            result = self.run(f"{destpath} {self.port} {self.generate_new_token()}")
+            sleep(self._delay)
+            result += self.run()
+            if not "sh" in result:
+                logging.debug(f"Server application started on port {self.port}")
+                break
+            else:  # we tried the wrong binary version. make sure server is not running and try again with next file
+                self.stop()
+        else:
+            raise RuntimeError(f"Server application could not be started with any of {[f for f in self._srcfiles]}.")
+        return self.token
