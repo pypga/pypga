@@ -4,7 +4,6 @@ import threading
 from time import time
 import socket
 import uuid
-import pydantic
 
 
 class Client:

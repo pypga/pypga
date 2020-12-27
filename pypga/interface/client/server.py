@@ -1,14 +1,18 @@
+from scp import SCPException
+from paramiko import SSHException
+from .sshshell import SshShell
 
 
 class Server:
-    def __init__(self, host, delay=0.05):
+    def __init__(self, host, delay=0.05, fpga_file=None):
         self._delay = delay
         self.shell = SshShell(hostname=host,
                               sshport=22,
                               user="root",
                               password="root",
                               scp=True)
-        self.update_fpga()
+        if fpga_file is not None:
+            self.update_fpga(fpga_file)
         self.installserver()
 
     def update_fpga(self, filename):

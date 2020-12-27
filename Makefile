@@ -12,7 +12,7 @@ build-noclean:
 	source $(VIVADO_PATH) && $(PYTHON) -m pypga.example.build && cat build/csr.csv
 
 build-server:
-	source $(VIVADO_PATH) && $(MAKE) -C pypga/interface/server
+	source $(VIVADO_PATH) && $(MAKE) -C pypga/interface/client/server
 
 load:
 	scp build/redpitaya.bin root@$(REDPITAYA_HOSTNAME):/root/redpitaya.bin && \
