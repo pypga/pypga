@@ -1,0 +1,4 @@
+migen
+migen-axi
+misoc
+pydantic>=1.5.1
