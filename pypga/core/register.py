@@ -17,11 +17,16 @@ class Register(CustomizableMixin):
         if self.name is None:
             self.name = f"{owner.name}{self._SEP}{name}"
 
+    def _get_full_name(self, instance):
+        parents = instance._get_parents()
+        return parents[0] + "." + "_".join(parents[1:] + [self.name])
+
     def __get__(self, instance, owner=None):
         logger.debug(f"Reading {self.name} with {instance}/{owner}")
         if instance is None:
             return self
-        return instance._get_register(self.name, self)
+        return instance._interface.read(self._get_full_name(instance))
 
     def __set__(self, instance, value):
-        instance._set_register(self.name, value, self)
+        if self.writable:
+            instance._interface.write(self._get_full_name(instance), value)

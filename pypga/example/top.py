@@ -20,8 +20,10 @@ class Top(Module):
         self.state0 = value
         print("new:", self.state0)
 
-    # TODO: interface creation@add_client_creation(board="125-14")
-    def __init__(self, a, b):
+    #@add_interface(board="125-14")
+    def __init__(self):#, a, b):
+        a=1
+        b=2
         logging.warning(f"Calling {self}.__init__({a}, {b}).")
         self.state = a
 
@@ -33,7 +35,11 @@ class Top(Module):
 
 
 # example interface creation
-# myclient = Top(a=7, b=2, hostname=3, board_type="stemlab125_14-125-14")
+# myclient = Top(hostname=3, board_type="stemlab125_14-125-14")
+# short for
+# myclient = Top(a=7, b=2), hostname=3, board_type="stemlab125_14-125-14")
+
+
 # print(myclient.led0to3.led0_state)
 # myclient.led0to3.led0_state = 0
 # myclient.led0to3.blink()

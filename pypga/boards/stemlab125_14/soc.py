@@ -15,7 +15,6 @@ class StemlabSoc(SoCCore):
         super().__init__(platform=platform, csr_data_width=32, ident="Soc")
         platform.add_platform_command("create_clock -name clk_fpga_0 -period 8 [get_pins \"PS7/FCLKCLK[0]\"]")
         platform.add_platform_command("set_input_jitter clk_fpga_0 0.24")
-
         # ADC clock input (main clock input)
         clk125_pads = platform.request("clk125")  # xdc 57
         platform.add_platform_command("create_clock -name clk_adc -period 8 [get_ports {port}]", port=clk125_pads.p)  # xdc 208
@@ -32,6 +31,5 @@ class StemlabSoc(SoCCore):
         #     Instance("ODDR", o_Q=adc_pads.clk[1], i_D1=0, i_D2=1, i_CE=1, i_C=self.cd_adc.clk),
         # ]
         # self.comb += adc_pads.cdcs.eq(1)
-
         self.submodules.top = top
         self.csr_devices.append("top")

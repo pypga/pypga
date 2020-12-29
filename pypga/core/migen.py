@@ -3,7 +3,7 @@ from migen.build.generic_platform import GenericPlatform
 from misoc.interconnect.csr import AutoCSR, CSRStorage
 from .register import Register
 from .logic_function import is_logic
-from .module import Module
+from .module import Module, scan_module_class
 import logging
 import typing
 
@@ -20,7 +20,7 @@ class MigenModule(_MigenModule, AutoCSR):
     """
     def __init__(self, module_class: Module, platform: GenericPlatform):
         logger.debug(f"Creating migen module for module class {module_class.__name__}.")
-        registers, logic_functions, submodules, other = self._scan_module_class(module_class)
+        registers, logic_functions, submodules, other = scan_module_class(module_class)
         # OTHER ATTRIBUTES MIGHT HAVE TO BE SET TO GUARANTEE EXPECTED FUNCTIONALITY
         # SUCH AS ACCESSING CLASS ATTRIBuTES FROM LOGIC - CURRENTLY WE WORKED AROUND THIS
         # first set "other" attributes, such as constants etc
@@ -37,44 +37,6 @@ class MigenModule(_MigenModule, AutoCSR):
         for name, logic_function in logic_functions.items():
             self._add_logic_function(logic_function, name, platform)
         logger.debug(f"Finished migen module for module class {module_class.__name__}.")
-
-    @staticmethod
-    def _scan_module_class(module_class):
-        registers = {}
-        logic = {}
-        submodules = {}
-        other = {}
-        for name, value in typing.get_type_hints(module_class).items():
-            if isinstance(value, type) and issubclass(value, Module):
-                submodules[name] = value
-            elif isinstance(value, type) and issubclass(value, Register):
-                registers[name] = value
-            else:
-                # let common coding mistakes produce an error
-                if isinstance(value, Register):
-                    raise ValueError(f"Register {name} should not be instantiated. "
-                                     f"Type annotations require the type, not an "
-                                     f"instance. Consider removing `()` from the "
-                                     f"register definition.")
-                elif isinstance(value, Module):
-                    raise ValueError(f"Submodule {name} should not be instantiated. "
-                                     f"Type annotations require the type, not an "
-                                     f"instance. Consider removing `()` from the "
-                                     f"module definition.")
-                else:
-                    logger.debug(f"Ignoring annotated type {name}: {value}.")
-        for name in dir(module_class):
-            value = getattr(module_class, name)
-            if is_logic(value):
-                logic[name] = value
-            elif isinstance(value, Register):
-                logger.warning(f"The register {name} was already instantiated. This is "
-                               f"currently discouraged and not fully supported.")
-                registers[name] = value
-            else:
-                if not name.startswith("__"):
-                    other[name] = value
-        return registers, logic, submodules, other
 
     def _add_submodule(self, submodule, name, platform):
         logger.debug(f"Creating submodule {name} of type {submodule.__name__}.")
