@@ -11,7 +11,7 @@ class CustomizableMixin:
 
 
 def get_result_path(board, module_class):
-    return (settings.result_path / str(board) / module_class.__name__ / cls._hash).resolve()
+    return (settings.result_path / str(board) / module_class.__name__ / module_class._hash).resolve()
 
 
 def get_build_path():

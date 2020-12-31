@@ -21,7 +21,7 @@ class Builder(BaseBuilder):
         ])
 
     def _write_csr_file(self):
-        with open(f"{self._build_dir}/csr.csv", "w") as f:
+        with (self.build_path / "csr.csv").open("w") as f:
             f.write(cpu_interface.get_csr_csv(self.soc.get_csr_regions()))
 
     def build(self):
@@ -29,7 +29,7 @@ class Builder(BaseBuilder):
         self.top = MigenModule(self.module_class, platform=self._platform)
         self.soc = StemlabSoc(platform=self._platform, top=self.top)
         logger.debug("Running vivado build...")
-        self.soc.build(build_dir=self._build_dir)
+        self.soc.build(build_dir=self.build_path)
         self._write_csr_file()
         logger.debug(f"Finished build for {self.__class__.__name__}.")
         self.copy_results()

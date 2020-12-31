@@ -119,8 +119,12 @@ class Module:
     def new(cls, host=None, board="stemlab125_14", autobuild=True):
         """Creates a new board instance."""
         result_path = get_result_path(board=board, module_class=cls)
-        if not result_path.is_dir() and autobuild:
-            cls._build(board)
+        if not result_path.is_dir():
+            if autobuild:
+                cls._build(board)
+            else:
+                raise ValueError("The design you are trying to instantiate must be built first. Try "
+                                 "running this function call with the argument ``autobuild=True``.")
         if host is None:
             interface = LocalInterface(build_result_path=result_path)
         else:

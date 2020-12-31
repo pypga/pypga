@@ -15,7 +15,8 @@ class BaseBuilder(ABC):
 
     def copy_results(self):
         """Copy all build results to a persistent folder"""
-        shutil.rmtree(self.result_path)
+        if self.result_path.exists():
+            shutil.rmtree(self.result_path)
         self.result_path.mkdir(parents=True, exist_ok=True)
         for result in self._build_results:
             shutil.copy(self.build_path / result, self.result_path / result)
