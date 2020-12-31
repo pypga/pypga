@@ -140,6 +140,7 @@ cython_debug/
 # Custom additions
 build/
 .idea/
+out/
 
 # notebooks
 *.ipynb
