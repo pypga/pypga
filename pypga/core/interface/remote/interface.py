@@ -1,9 +1,9 @@
-from .. import BaseInterface
+from ..interface import BaseInterface
 from .client import Client
 from .server import Server
 
 
-class ClientInterface(BaseInterface):
+class RemoteInterface(BaseInterface):
     def __init__(self, build_result_path: str = None, host: str = "127.0.0.1"):
         super().__init__(build_result_path)
         self.host = host

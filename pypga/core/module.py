@@ -3,7 +3,9 @@ import logging
 import typing
 from .register import Register
 from .logic_function import is_logic
-from ..interface import ClientInterface
+from .interface import RemoteInterface, LocalInterface
+from .. import boards
+from .common import get_result_path
 
 
 logger = logging.getLogger(__name__)
@@ -52,6 +54,16 @@ def scan_module_class(module_class) -> typing.Tuple[dict, dict, dict, dict]:
     return registers, logic, submodules, other
 
 
+def hash_module(module_class) -> str:
+    """Computes a hash to unambiguously identify a module class.
+
+    This is used primarily to decide whether a pre-built design is consistent
+    with the running code.
+    """
+    # TODO: implement
+    return "latest"
+
+
 class Module:
     @classmethod
     def __init_subclass__(cls):
@@ -70,6 +82,8 @@ class Module:
             self._init_module(name, parent, interface)
             old_init(self, *args, **kwargs)
         cls.__init__ = new_init
+        # 4. compute hash for module
+        cls._hash = hash_module(cls)
 
     def _init_module(self, name, parent, interface):
         """Initializes the pypga module hierarchy before the actual constructor is called."""
@@ -83,20 +97,6 @@ class Module:
         for name, submodule_cls in self._pypga_submodules.items():
             setattr(self, name, submodule_cls(name=name, parent=self, interface=interface))
 
-    @classmethod
-    @functools.wraps(ClientInterface)
-    def new(cls, *args, **kwargs):
-        """Creates a new board instance."""
-        interface = ClientInterface(*args, **kwargs)
-        return cls(interface=interface)
-
-    def _set_register(self, name, value, register=None):
-        logger.debug(f"Setting register {self.name}/{name} = {hex(value)} (register={register})")
-
-    def _get_register(self, name, register=None):
-        logger.debug(f"reading register {self.name}/{name} (register={register})")
-        return name
-
     def _get_parents(self):
         parents = [self._name]
         parent = self._parent
@@ -108,3 +108,21 @@ class Module:
     def _get_full_name(self):
         parents = self._get_parents()
         return parents[0] + "." + "_".join(parents[1:])
+
+    @classmethod
+    def _build(cls, board):
+        board_module = getattr(boards, board)
+        return board_module.Builder(cls).build()
+
+    @classmethod
+    @functools.wraps(RemoteInterface)
+    def new(cls, host=None, board="stemlab125_14", autobuild=True):
+        """Creates a new board instance."""
+        result_path = get_result_path(board=board, module_class=cls)
+        if not result_path.is_dir() and autobuild:
+            cls._build(board)
+        if host is None:
+            interface = LocalInterface(build_result_path=result_path)
+        else:
+            interface = RemoteInterface(host=host, build_result_path=result_path)
+        return cls(interface=interface)

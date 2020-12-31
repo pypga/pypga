@@ -5,6 +5,8 @@ from migen import Signal
 
 
 class Top(Module):
+    _default_board = "stemlab125_14"
+
     ### FPGA definition ###
     state0: Register
     state1: Register.custom(size=32, reset=0)
@@ -34,7 +36,7 @@ class Top(Module):
 
 
 
-# example interface creation
+# examples interface creation
 # myclient = Top(hostname=3, board_type="stemlab125_14-125-14")
 # short for
 # myclient = Top(a=7, b=2), hostname=3, board_type="stemlab125_14-125-14")

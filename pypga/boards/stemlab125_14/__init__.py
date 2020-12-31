@@ -1,6 +1,6 @@
-from .builder import StemlabBuilder
+from .builder import Builder
 
 
 def build(Top):
-    builder = StemlabBuilder(Top=Top)
+    builder = Builder(module_class=Top)
     builder.build()
