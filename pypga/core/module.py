@@ -73,7 +73,7 @@ class Module:
                 setattr(cls, name, register)
             else:
                 # register was already instantiated
-                assert isinstance(register, register_cls)
+                assert isinstance(register, Register)
                 assert register.name == name
         # 3. insert call to _init_module into constructor for submodule instantiation at runtime
         old_init = functools.partial(cls.__init__)
