@@ -15,7 +15,7 @@ class Register(CustomizableMixin):
 
     def __set_name__(self, owner, name):
         if self.name is None:
-            self.name = f"{owner.name}{self._SEP}{name}"
+            self.name = name
 
     def _get_full_name(self, instance):
         parents = instance._get_parents()

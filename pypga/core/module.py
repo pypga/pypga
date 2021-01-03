@@ -4,8 +4,7 @@ import typing
 from .register import Register
 from .logic_function import is_logic
 from .interface import RemoteInterface, LocalInterface
-from .. import boards
-from .common import get_result_path
+from .builder import get_builder
 
 
 logger = logging.getLogger(__name__)
@@ -55,12 +54,6 @@ def scan_module_class(module_class) -> typing.Tuple[dict, dict, dict, dict]:
 
 
 def hash_module(module_class) -> str:
-    """Computes a hash to unambiguously identify a module class.
-
-    This is used primarily to decide whether a pre-built design is consistent
-    with the running code.
-    """
-    # TODO: implement
     return "latest"
 
 
@@ -72,9 +65,16 @@ class Module:
         cls._pypga_registers, cls._pypga_logic, cls._pypga_submodules, other = scan_module_class(cls)
         # 2. instantiate all registers
         for name, register_cls in cls._pypga_registers.items():
-            register = register_cls()
-            register.name = name
-            setattr(cls, name, register)
+            try:
+                register = getattr(cls, name)
+            except AttributeError:
+                register = register_cls()
+                register.name = name
+                setattr(cls, name, register)
+            else:
+                # register was already instantiated
+                assert isinstance(register, register_cls)
+                assert register.name == name
         # 3. insert call to _init_module into constructor for submodule instantiation at runtime
         old_init = functools.partial(cls.__init__)
         @functools.wraps(cls.__init__)
@@ -109,24 +109,29 @@ class Module:
         parents = self._get_parents()
         return parents[0] + "." + "_".join(parents[1:])
 
+
+DEFAULT_BOARD = "stemlab125_14"
+
+
+class TopModule(Module):
     @classmethod
-    def _build(cls, board):
-        board_module = getattr(boards, board)
-        return board_module.Builder(cls).build()
+    def _build(cls, board=DEFAULT_BOARD):
+        builder = get_builder(board=board, module_class=cls)
+        return builder.build()
 
     @classmethod
     @functools.wraps(RemoteInterface)
-    def new(cls, host=None, board="stemlab125_14", autobuild=True):
-        """Creates a new board instance."""
-        result_path = get_result_path(board=board, module_class=cls)
-        if not result_path.is_dir():
+    def run(cls, *args, host=None, board=DEFAULT_BOARD, autobuild=True, **kwargs):
+        """Runs the design on a board and returns an interfaced instance."""
+        builder = get_builder(board=board, module_class=cls)
+        if not builder.result_exists:
             if autobuild:
-                cls._build(board)
+                builder.build()
             else:
                 raise ValueError("The design you are trying to instantiate must be built first. Try "
                                  "running this function call with the argument ``autobuild=True``.")
         if host is None:
-            interface = LocalInterface(build_result_path=result_path)
+            interface = LocalInterface(result_path=builder.result_path)
         else:
-            interface = RemoteInterface(host=host, build_result_path=result_path)
-        return cls(interface=interface)
+            interface = RemoteInterface(host=host, result_path=builder.result_path)
+        return cls(*args, interface=interface, **kwargs)

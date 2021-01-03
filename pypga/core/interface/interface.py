@@ -4,9 +4,9 @@ from .csrmap import CsrMap
 
 
 class BaseInterface(ABC):
-    def __init__(self, build_result_path):
+    def __init__(self, result_path):
         """Interface to the registers of a given FPGA board."""
-        self.build_result_path = Path(build_result_path).resolve()
+        self.build_result_path = Path(result_path).resolve()
         self.csrmap = CsrMap(self.build_result_path / "csr.csv")
 
     def name_to_address(self, name):

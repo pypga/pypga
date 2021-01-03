@@ -2,7 +2,6 @@ import logging
 from migen_axi.platforms import redpitaya
 from misoc.integration import cpu_interface
 from .soc import StemlabSoc
-from ...core.migen import MigenModule
 from ...core.builder import BaseBuilder
 
 
@@ -25,8 +24,6 @@ class Builder(BaseBuilder):
             f.write(cpu_interface.get_csr_csv(self.soc.get_csr_regions()))
 
     def build(self):
-        self._create_platform()
-        self.top = MigenModule(self.module_class, platform=self._platform)
         self.soc = StemlabSoc(platform=self._platform, top=self.top)
         logger.debug("Running vivado build...")
         self.soc.build(build_dir=self.build_path)

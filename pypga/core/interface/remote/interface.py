@@ -4,8 +4,8 @@ from .server import Server
 
 
 class RemoteInterface(BaseInterface):
-    def __init__(self, build_result_path: str = None, host: str = "127.0.0.1"):
-        super().__init__(build_result_path)
+    def __init__(self, result_path: str = None, host: str = "127.0.0.1"):
+        super().__init__(result_path)
         self.host = host
         self.server = Server(
             host=host,

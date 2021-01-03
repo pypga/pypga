@@ -1,3 +1,4 @@
+import shutil
 from .settings import settings
 
 
@@ -10,9 +11,8 @@ class CustomizableMixin:
         return type(f"Custom{cls.__name__}", (cls,), kwargs)
 
 
-def get_result_path(board, module_class):
-    return (settings.result_path / str(board) / module_class.__name__ / module_class._hash).resolve()
+def empty_path(path):
+    if path.exists():
+        shutil.rmtree(path)
+    path.mkdir(parents=True, exist_ok=True)
 
-
-def get_build_path():
-    return (settings.build_path).resolve()

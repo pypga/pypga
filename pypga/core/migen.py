@@ -1,11 +1,11 @@
 from migen import Module as _MigenModule
 from migen.build.generic_platform import GenericPlatform
+from migen.fhdl.verilog import convert
 from misoc.interconnect.csr import AutoCSR, CSRStorage
 from .register import Register
-from .logic_function import is_logic
-from .module import Module, scan_module_class
 import logging
 import typing
+import hashlib
 
 
 logger = logging.getLogger(__name__)
@@ -18,9 +18,11 @@ class MigenModule(_MigenModule, AutoCSR):
         module_class (:class:`Module`): The module definition to extract a migen module from.
 
     """
-    def __init__(self, module_class: Module, platform: GenericPlatform):
+    def __init__(self, module_class, platform: GenericPlatform):
         logger.debug(f"Creating migen module for module class {module_class.__name__}.")
-        registers, logic_functions, submodules, other = scan_module_class(module_class)
+        registers = module_class._pypga_registers
+        logic_functions = module_class._pypga_logic
+        submodules = module_class._pypga_submodules
         # OTHER ATTRIBUTES MIGHT HAVE TO BE SET TO GUARANTEE EXPECTED FUNCTIONALITY
         # SUCH AS ACCESSING CLASS ATTRIBuTES FROM LOGIC - CURRENTLY WE WORKED AROUND THIS
         # first set "other" attributes, such as constants etc
@@ -58,5 +60,18 @@ class MigenModule(_MigenModule, AutoCSR):
         except TypeError:
             return_value = logic_function(self)
         if return_value is not None:
-            setattr(self, function.__name__, return_value)
+            setattr(self, logic_function.__name__, return_value)
 
+    def _hash(self):
+        """
+        Returns a hash to unambiguously identify a design.
+
+        This is used to decide whether a design has been build or still needs to be.
+        """
+        verilog = convert(self)
+        hash_ = hashlib.sha256()
+        hash_.update(verilog.main_source.encode())
+        for filename, content in verilog.data_files.items():
+            hash_.update(filename.encode())
+            hash_.update(content.encode())
+        return hash_.hexdigest()
