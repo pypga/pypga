@@ -1,5 +1,4 @@
 from migen import *
-from misoc.interconnect.csr import *
 from ..core import Module, logic, Register
 
 

@@ -1,7 +1,7 @@
 import logging
 from migen_axi.integration.soc_core import SoCCore
 # only required for ADC clock PLL
-#from migen import *
+import migen
 #from migen.build.generic_platform import *
 #from migen.genlib.cdc import AsyncResetSynchronizer
 
@@ -15,12 +15,24 @@ class StemlabSoc(SoCCore):
         super().__init__(platform=platform, csr_data_width=32, ident="Soc")
         platform.add_platform_command("create_clock -name clk_fpga_0 -period 8 [get_pins \"PS7/FCLKCLK[0]\"]")
         platform.add_platform_command("set_input_jitter clk_fpga_0 0.24")
-        # ADC clock input (main clock input)
-        clk125_pads = platform.request("clk125")  # xdc 57
-        platform.add_platform_command("create_clock -name clk_adc -period 8 [get_ports {port}]", port=clk125_pads.p)  # xdc 208
+
         adc_pads = platform.request("adc")
         for port in adc_pads.data_a, adc_pads.data_b:
             platform.add_platform_command("set_input_delay -max 3.400 -clock clk_adc [get_ports {port}[*]]", port=port)  # xdc 210
+
+        # self.locked = Signal()
+        # clk125_pins = platform.request("clk125")
+        # clk125_raw = Signal()
+        # clk125 = Signal()
+        # self.specials += Instance("IBUFGDS", i_I=clk125_pins.p, i_IB=clk125_pins.n, o_O=clk125_raw)
+        # self.specials += Instance("BUFG", i_I=clk125_raw, o_O=clk125)
+        #
+        #
+        # self.clock_domains.clk_adc = ClockDomain()
+        #
+        #
+
+
         # TODO: ADC clock PLL, and possibly ADC clock output (not required)
         # self.specials += [Instance("IBUFGDS", i_I=clk125_pads.p, i_IB=clk125_pads.n, o_O=self.cd_adc.clk)]  # top.v 310
         # generating ADC clock disabled (top.v 350)

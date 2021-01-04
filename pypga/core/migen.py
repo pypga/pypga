@@ -44,6 +44,7 @@ class MigenModule(_MigenModule, AutoCSR):
         logger.debug(f"Creating submodule {name} of type {submodule.__name__}.")
         migen_submodule = MigenModule(submodule, platform)
         setattr(self.submodules, name, migen_submodule)
+        # TODO: remove the next line, it seems to be redundant as migen automatically does this
         setattr(self, name, migen_submodule)  # also make the submodule available via `self.name`
 
     def _add_register(self, register, name):

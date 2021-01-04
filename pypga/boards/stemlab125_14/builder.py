@@ -1,7 +1,7 @@
 import logging
 from migen_axi.platforms import redpitaya
 from misoc.integration import cpu_interface
-from .soc import StemlabSoc
+from pypga.boards.stemlab125_14.soc import StemlabSoc
 from ...core.builder import BaseBuilder
 
 
