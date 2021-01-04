@@ -67,7 +67,7 @@ class Server:
         self.run("killall nginx")
         self.run("systemctl stop redpitaya_nginx")
         self.run(f"cat {destpath} > //dev//xdevcfg")
-        self.shell.ask(f"m -f {destpath}")  # clean up the bitstream
+        self.shell.ask(f"rm -f {destpath}")  # clean up the bitstream
 
     def generate_new_token(self) -> str:
         self.token = str(uuid.uuid4().hex)

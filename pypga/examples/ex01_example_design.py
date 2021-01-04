@@ -10,7 +10,7 @@ class ExampleDesign(TopModule):
     led0to3: FourLeds
     led4to7: FourLeds
     # reason for type hint instead of submodule instance: do not call
-    # FourLeds.__init__() to avoid
+    # FourLeds.__init__() at class creation
 
     def __init__(self, a, b=2):
         logging.warning(f"Calling {self}.__init__({a}, {b}).")

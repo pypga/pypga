@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 class Builder(BaseBuilder):
     board = "stemlab125_14"
+    _build_results = ["bitstream.bin", "csr.csv"]
 
     def _create_platform(self):
         logger.debug("Creating platform")
@@ -23,7 +24,7 @@ class Builder(BaseBuilder):
         with (self.build_path / "csr.csv").open("w") as f:
             f.write(cpu_interface.get_csr_csv(self.soc.get_csr_regions()))
 
-    def build(self):
+    def _build(self):
         self.soc = StemlabSoc(platform=self._platform, top=self.top)
         logger.debug("Running vivado build...")
         self.soc.build(build_dir=self.build_path)

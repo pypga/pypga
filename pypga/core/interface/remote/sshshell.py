@@ -92,11 +92,7 @@ class SshShell(object):
         return self.askraw(question + '\n')
 
     def __del__(self):
-        try:
-            self.channel.stop()
-        except AttributeError:
-            pass  # already broken
-        self.ssh.stop()
+        self.ssh.close()
 
     def reboot(self):
         self.endapp()
