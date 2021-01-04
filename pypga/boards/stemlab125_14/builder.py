@@ -20,7 +20,7 @@ class Builder(BaseBuilder):
             "write_cfgmem -force -format BIN -size 2 -interface SMAPx32 -disablebitswap -loadbit \"up 0x0 ./top.bit\" ./bitstream.bin",
         ])
 
-    def _write_csr_file(self):
+    def _export_register_addresses(self):
         with (self.build_path / "csr.csv").open("w") as f:
             f.write(cpu_interface.get_csr_csv(self.soc.get_csr_regions()))
 
@@ -28,6 +28,6 @@ class Builder(BaseBuilder):
         self.soc = StemlabSoc(platform=self._platform, top=self.top)
         logger.debug("Running vivado build...")
         self.soc.build(build_dir=self.build_path)
-        self._write_csr_file()
+        self._export_register_addresses()
         logger.debug(f"Finished build for {self.__class__.__name__}.")
         self.copy_results()

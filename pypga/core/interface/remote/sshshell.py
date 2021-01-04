@@ -118,7 +118,7 @@ class SshShell(object):
                 nextgood = True
             else:
                 nextgood = False
-        if macs == []:  # problem on more recent redpitaya os
+        if macs == []:  # problem on more recent stemlab125_14 os
             nextgood = False
             for token in self.ask('ip address').split():
                 if nextgood and len(token.split(':'))==6:
