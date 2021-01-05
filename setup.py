@@ -9,5 +9,11 @@ setup(
     name='pypga',
     version='1.0.0',
     packages=find_packages(),
-    install_requires=requirements,
+    install_requires=(
+        "migen",
+        "misoc",
+        "migen-axi",
+        "pydantic>=1.5.1",
+        "paramiko>=2.7.2",
+    ),
 )
