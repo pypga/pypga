@@ -2,14 +2,13 @@ PyPGA
 =====
 
 Pypga (Python Programmable Gate Arrays) aims to make FPGA programming more efficient by allowing you to create 
-reusable modules in Python that contain both the programmable logic and the python logic to control the logic 
-at runtime from Python. That way you can build complex hierarchies of modules and share these with others easily. 
-Furthermore, the boilerplate code required to run your logic on an FPGA board is kept separate, so migrating 
-your application to another board available in PyPGA can be as simple as changing the name of the board to run 
-the application on. PyPGA automatically detects when you change the programmable logic and triggers the gateware
-build process only when required. 
+reusable modules in Python that contain both the programmable logic (PL) running on the FPGA and the Python logic 
+to control the PL behavior at runtime from Python. That way you can build complex hierarchies of modules and share 
+these with others easily. Furthermore, the boilerplate code required to run your logic on an FPGA board is kept 
+separate from the application code, so migrating to another board can be as simple as changing a single argument. 
+PyPGA automatically detects when you change the PL and triggers the gateware build process only when required. 
 
-At present, only the TEMlab125-14 board is supported. PyPGA heavily uses [migen](https://github.com/m-labs/migen) 
+At present, only the STEMlab125-14 board is supported. PyPGA heavily uses [migen](https://github.com/m-labs/migen) 
 to express the programmable logic using Python. For an introduction to the available migen commands, please refer 
 to the [migen documentation](https://m-labs.hk/migen/manual/fhdl.html). 
 
@@ -17,14 +16,13 @@ to the [migen documentation](https://m-labs.hk/migen/manual/fhdl.html).
 Installation
 ============
 
-It is required to have Vivado 2017.2 or a more recent version installed
-and the Vivado folder in the environment variables. On Ubuntu, assuming 
-default installation paths, this is achieved by running 
+It is required to have Vivado 2017.2 or a more recent version installed and the Vivado folder in the environment 
+variables. On Ubuntu, assuming default installation paths, this is achieved by running 
 
     source /opt/Xilinx/Vivado/2017.2/settings.sh
 
 
-To install this package, run
+To install PyPGA, run
 
     git clone https://github.com/pypga/pypga.git
     cd pypga
