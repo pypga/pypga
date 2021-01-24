@@ -40,6 +40,6 @@ To install PyPGA, run
 Usage
 =====
 
+
 .. literalinclude:: usage.py
-  :language: Python
 
