@@ -41,7 +41,7 @@ Usage
 =====
 
 
-.. include:: python
+.. code-block:: python
 
    from migen import Signal
    from pypga.core import TopModule, Module, logic, Register
