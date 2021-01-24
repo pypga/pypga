@@ -43,3 +43,5 @@ Usage
 
 .. literalinclude:: usage.py
 
+
+.. include:: usage.py
