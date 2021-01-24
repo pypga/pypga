@@ -1,6 +1,7 @@
 import logging
 from migen_axi.integration.soc_core import SoCCore
 # only required for ADC clock PLL
+<<<<<<< HEAD
 import migen
 #from migen.build.generic_platform import *
 #from migen.genlib.cdc import AsyncResetSynchronizer
