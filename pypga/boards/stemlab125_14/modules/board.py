@@ -3,9 +3,9 @@ from .dac import Dac
 from .clock import Clock
 
 class Stemlab125_14(TopModule):
-    zclock: Clock
-
+    clock: Clock
     dac: Dac
+
 
     @logic
     def _connect_dac_to_pll(self):

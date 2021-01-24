@@ -20,21 +20,7 @@ class StemlabSoc(SoCCore):
         for port in adc_pads.data_a, adc_pads.data_b:
             platform.add_platform_command("set_input_delay -max 3.400 -clock clk_adc [get_ports {port}[*]]", port=port)  # xdc 210
 
-        # self.locked = Signal()
-        # clk125_pins = platform.request("clk125")
-        # clk125_raw = Signal()
-        # clk125 = Signal()
-        # self.specials += Instance("IBUFGDS", i_I=clk125_pins.p, i_IB=clk125_pins.n, o_O=clk125_raw)
-        # self.specials += Instance("BUFG", i_I=clk125_raw, o_O=clk125)
-        #
-        #
-        # self.clock_domains.clk_adc = ClockDomain()
-        #
-        #
-
-
         # TODO: ADC clock PLL, and possibly ADC clock output (not required)
-        # self.specials += [Instance("IBUFGDS", i_I=clk125_pads.p, i_IB=clk125_pads.n, o_O=self.cd_adc.clk)]  # top.v 310
         # generating ADC clock disabled (top.v 350)
         # self.specials += [AsyncResetSynchronizer(self.cd_adc, ResetSignal())]
         # self.clock_domains.cd_adc = ClockDomain()
