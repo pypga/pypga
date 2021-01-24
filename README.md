@@ -82,7 +82,7 @@ Usage
     # at first execution, this line will trigger the gatebare build process
 
     # read the value of some registers
-    prin("Rates: {myboard.led0.rate}, {myboard.led1.rate}, {myboard.led2.rate}")
+    print("Rates: {myboard.led0.rate}, {myboard.led1.rate}, {myboard.led2.rate}")
     # change the value of some registers
     e.led0.rate = 0
     e.led1.rate = 2**11
