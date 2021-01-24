@@ -4,9 +4,11 @@ PyPGA
 Pypga (Python Programmable Gate Arrays) aims to make FPGA programming more efficient by allowing you to create 
 reusable modules in Python that contain both the programmable logic (PL) running on the FPGA and the Python logic 
 to control the PL behavior at runtime from Python. That way you can build complex hierarchies of modules and share 
-these with others easily. Furthermore, the boilerplate code required to run your logic on an FPGA board is kept 
-separate from the application code, so migrating to another board can be as simple as changing a single argument. 
-PyPGA automatically detects when you change the PL and triggers the gateware build process only when required. 
+these with others easily. Using class inheritance, it becomes straightforward to maintain multiple versions of a 
+design which allows optimal use of FPGA resources based on the specific use-case. PyPGA automatically detects when 
+you change the PL and triggers the gateware build process only when it encounters a design it has never built before. 
+Furthermore, the boilerplate code required to run your logic on an FPGA board is kept separate from the application 
+code, so migrating to another board can be as simple as changing a single argument.  
 
 At present, only the STEMlab125-14 board is supported. PyPGA heavily uses [migen](https://github.com/m-labs/migen) 
 to express the programmable logic using Python. For an introduction to the available migen commands, please refer 
@@ -38,6 +40,7 @@ Usage
     from pypga.core import TopModule, Module, logic, Register
 
 
+    """A Module is the basic building block in PyPGA"""
     def SingleLedBlinker(counter_width=32, default_rate=2**6):
         class _SingleLedBlinker(Module):
             # define a register that is accessible from Python
