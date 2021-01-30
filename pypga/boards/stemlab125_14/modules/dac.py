@@ -1,25 +1,26 @@
 from migen import *
 from pypga.core import Module, logic, Register
+from pypga.core.register import FixedPointRegister
 
 
 bits = 14
 
 
 class Dac(Module):
-    out1_setting: Register.custom(size=bits, reset=0)
-    out2_setting: Register.custom(size=bits, reset=0)
+    out1_setting: FixedPointRegister.custom(width=bits, signed=True, decimals=bits-1, default=0)
+    out2_setting: FixedPointRegister.custom(width=bits, signed=True, decimals=bits-1, default=0)
+    out1: FixedPointRegister.custom(width=bits, signed=True, decimals=bits-1, readonly=True, default=0)
+    out2: FixedPointRegister.custom(width=bits, signed=True, decimals=bits-1, readonly=True, default=0)
 
     @logic
     def _example_connectivity(self):
-        self.out1.eq(self.out1_setting.storage_full)
-        self.out2.eq(self.out2_setting.storage_full)
+        self.sync += [
+            self.out1.eq(self.out1_setting),
+            self.out2.eq(self.out2_setting),
+        ]
 
     @logic
     def _dac_settings(self, platform):
-        # these are the signals to be driven by external ones
-        self.out1 = Signal(bits, reset=0)
-        self.out2 = Signal(bits, reset=0)
-
         dac = platform.request("dac")
         dac_dat_a = Signal(bits, reset=0)
         dac_dat_b = Signal(bits, reset=0)

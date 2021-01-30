@@ -1,12 +1,13 @@
 from migen import Instance, Signal, ClockDomain
-from pypga.core import Module, logic, Register
+from pypga.core import Module, logic, Register, BoolRegister
 
 
 class Clock(Module):
+    locked: BoolRegister.custom(readonly=True)
+
     @logic
     def __logic__(self, platform):
         # signals for external connectivity
-        self.locked = Signal()
         clk_adc_pins = platform.request("clk125")
         platform.add_platform_command("create_clock -name clk_adc -period 8 [get_ports {port}]", port=clk_adc_pins.p)  # xdc 208
         clk_adc_unbuffered = Signal()
@@ -22,7 +23,7 @@ class Clock(Module):
         clk_dac_2p = Signal()
         clk_ser = Signal()
         clk_pwm = Signal()
-        reset = Signal()
+        reset = Signal(reset=1)
         self.specials += [
             Instance(
                 "PLLE2_ADV",

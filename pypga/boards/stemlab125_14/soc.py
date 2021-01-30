@@ -1,7 +1,6 @@
 import logging
 from migen_axi.integration.soc_core import SoCCore
 # only required for ADC clock PLL
-<<<<<<< HEAD
 import migen
 #from migen.build.generic_platform import *
 #from migen.genlib.cdc import AsyncResetSynchronizer
@@ -16,10 +15,6 @@ class StemlabSoc(SoCCore):
         super().__init__(platform=platform, csr_data_width=32, ident="Soc")
         platform.add_platform_command("create_clock -name clk_fpga_0 -period 8 [get_pins \"PS7/FCLKCLK[0]\"]")
         platform.add_platform_command("set_input_jitter clk_fpga_0 0.24")
-
-        adc_pads = platform.request("adc")
-        for port in adc_pads.data_a, adc_pads.data_b:
-            platform.add_platform_command("set_input_delay -max 3.400 -clock clk_adc [get_ports {port}[*]]", port=port)  # xdc 210
 
         # TODO: ADC clock PLL, and possibly ADC clock output (not required)
         # generating ADC clock disabled (top.v 350)
