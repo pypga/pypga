@@ -1,7 +1,7 @@
 from migen import Module as _MigenModule
 from migen.build.generic_platform import GenericPlatform
 from migen.fhdl.verilog import convert
-from misoc.interconnect.csr import AutoCSR, CSRStorage
+from misoc.interconnect.csr import AutoCSR, CSRStorage, CSRStatus
 from .register import Register
 import logging
 import typing
@@ -44,14 +44,23 @@ class MigenModule(_MigenModule, AutoCSR):
         logger.debug(f"Creating submodule {name} of type {submodule.__name__}.")
         migen_submodule = MigenModule(submodule, platform)
         setattr(self.submodules, name, migen_submodule)
+        # TODO: remove the next line, it seems to be redundant as migen automatically does this
         setattr(self, name, migen_submodule)  # also make the submodule available via `self.name`
 
     def _add_register(self, register, name):
         if not isinstance(register, Register):
             register = register()  # create a register instance to retrieve attributes in case a class was passed
         logger.debug(f"Creating register {name} of type {register.__class__.__name__}.")
-        register_instance = CSRStorage(size=register.size, reset=register.reset, name=name)
-        setattr(self, name, register_instance)
+        name_csr = f"{name}_csr"
+        if register.readonly:
+            register_instance = CSRStatus(size=register.width, reset=register.default, name=name_csr)
+            setattr(self, name_csr, register_instance)
+            setattr(self, name, register_instance.status)
+        else:
+            register_instance = CSRStorage(size=register.width, reset=register.default, name=name_csr)
+            setattr(self, name_csr, register_instance)
+            setattr(self, name, register_instance.storage)
+            setattr(self, f"{name}_re", register_instance.re)
 
     def _add_logic_function(self, logic_function, name, platform):
         logger.debug(f"Implementing logic from function {name}.")

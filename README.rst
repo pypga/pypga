@@ -53,21 +53,25 @@ Usage
        counter_width = 32
         class _SingleLedBlinker(Module):
            # define a register that is accessible from Python
-           rate: Register.custom(size=counter_width, reset=default_rate)
+           rate: Register.custom(width=counter_width, default=default_rate)
 
            # programmable logic is marked by the @logic decorator
            @logic
            def _blink(self, platform):
                self.counter = Signal(counter_width)
-               self.sync += [self.counter.eq(self.counter + self.rate.storage_full)]
+               self.sync += [self.counter.eq(self.counter + self.rate)]
                self.sync += [platform.request("user_led").eq(self.counter[-1])]
-            # all methods without the @logic decorator are regular Python functions
+
+           # all methods without the @logic decorator are regular Python functions
            def speed_up(self):
                self.rate *= 2
-            # the regular class constructor is run after connecting to your board
+
+           # the regular class constructor is run after connecting to your board
            def __init__(self):
                print(f"Current blink rate: {self.rate} (arbitrary units).")
+
         return _SingleLedBlinker
+
 
    # a TopMpodule is one that can be run on a board
    class EightLeds(TopModule):
