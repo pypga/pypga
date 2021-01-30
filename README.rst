@@ -1,7 +1,7 @@
 PyPGA
 =====
 
-Pypga (Python Programmable Gate Arrays) aims to make FPGA programming more efficient by allowing you to create 
+PyPGA (Python Programmable Gate Arrays) aims to make FPGA programming more efficient by allowing you to create 
 reusable modules in Python that contain both the programmable logic (PL) running on the FPGA and the Python logic 
 to control the PL behavior at runtime from Python. That way you can build complex hierarchies of modules and share 
 these with others easily. Using class inheritance, it becomes straightforward to maintain multiple versions of a 
