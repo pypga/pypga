@@ -1,4 +1,5 @@
-from migen import Module as _MigenModule
+from migen import Module as MigenModule
+from migen import Signal, If
 from migen.build.generic_platform import GenericPlatform
 from migen.fhdl.verilog import convert
 from misoc.interconnect.csr import AutoCSR, CSRStorage, CSRStatus
@@ -11,7 +12,7 @@ import hashlib
 logger = logging.getLogger(__name__)
 
 
-class MigenModule(_MigenModule, AutoCSR):
+class AutoMigenModule(MigenModule, AutoCSR):
     """This class is the migen representation of a ``Module``.
 
     Args:
@@ -42,7 +43,7 @@ class MigenModule(_MigenModule, AutoCSR):
 
     def _add_submodule(self, submodule, name, platform):
         logger.debug(f"Creating submodule {name} of type {submodule.__name__}.")
-        migen_submodule = MigenModule(submodule, platform)
+        migen_submodule = AutoMigenModule(submodule, platform)
         setattr(self.submodules, name, migen_submodule)
         # TODO: remove the next line, it seems to be redundant as migen automatically does this
         setattr(self, name, migen_submodule)  # also make the submodule available via `self.name`
