@@ -82,4 +82,3 @@ def CounterTest(width=32, default_start=0, default_stop=None, default_step=1, di
 
     return _CounterTest
 
-
