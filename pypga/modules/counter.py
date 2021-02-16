@@ -66,7 +66,7 @@ def CounterTest(width=32, default_start=0, default_stop=None, default_step=1, di
         done: BoolRegister.custom(readonly=True, width=1, default=0)
 
         @logic
-        def _count(self):
+        def _counter_logic(self):
             self.submodules.counter = MigenCounter(
                 start=self.start,
                 stop=None if default_stop is None else self.stop,

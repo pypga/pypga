@@ -2,7 +2,7 @@ from migen import *
 from ..core import Module, logic, Register, Signal, MigenModule
 
 
-class MigenRom(MigenModule):
+class MigenRam(MigenModule):
     @staticmethod
     def _get_width_and_depth(data, width):
         if width is None:
@@ -27,11 +27,9 @@ class MigenRom(MigenModule):
         self.value = Signal(width, reset=0)
         ###
         self.specials.memory = Memory(width=width, depth=depth, init=data)
-        self.specials.port = self.memory.get_port(write_capable=False)
-        self.comb += [
-            self.port.adr.eq(index),
-            self.value.eq(self.port.dat_r),
-        ]
+        self.specials.port = self.memory.get_port(write_capable=True, we_granularity=False)
+        self.comb += self.port.adr.eq(index)
+        self.sync += self.value.eq(self.port.dat_r)
         self.width = width
         self.depth = depth
         self.data = data
@@ -61,3 +59,14 @@ def RomTest(data: list, width: int = None):
             return [self._get(index) for index in range(len(self._data))]
 
     return _RomTest
+
+#
+# class Example(Module):
+#     def __init__(self):
+#         self.specials.mem = Memory(32, 10, init=[5, 18, 32, 12, 2, 22, 22, 22, 0xff])
+#         p1 = self.mem.get_port(write_capable=True, we_granularity=False)
+#         p2 = self.mem.get_port(has_re=True, clock_domain="rd")
+#         self.specials += p1, p2
+#         self.ios = {p1.adr, p1.dat_r, p1.we, p1.dat_w,
+#             p2.adr, p2.dat_r, p2.re}
+#  p2.re}
