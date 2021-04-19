@@ -3,7 +3,7 @@ import logging
 import shutil
 from .common import empty_path
 from .settings import settings
-from .migen import MigenModule
+from .migen import AutoMigenModule
 
 
 logger = logging.getLogger(__name__)
@@ -47,10 +47,10 @@ class BaseBuilder(ABC):
     def __init__(self, module_class):
         self.module_class = module_class
         self._create_platform()
-        self.top = MigenModule(self.module_class, platform=self._platform)
+        self.top = AutoMigenModule(self.module_class, platform=self._platform)
         self.hash = self.top._hash()
         self._create_platform()
-        self.top = MigenModule(self.module_class, platform=self._platform)
+        self.top = AutoMigenModule(self.module_class, platform=self._platform)
         self.result_path = self._get_result_path()
         self.build_path = self._get_build_path()
 

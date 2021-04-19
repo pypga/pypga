@@ -109,6 +109,10 @@ class Module:
         parents = self._get_parents()
         return parents[0] + "." + "_".join(parents[1:])
 
+    @property
+    def registers(self):
+        return {name: getattr(self, name) for name in self._pypga_registers}
+
 
 DEFAULT_BOARD = "stemlab125_14"
 
