@@ -1,7 +1,7 @@
 import functools
 import logging
 import typing
-from .register import Register
+from .register import _Register
 from .logic_function import is_logic
 from .interface import RemoteInterface, LocalInterface
 from .builder import get_builder
@@ -23,11 +23,11 @@ def scan_module_class(module_class) -> typing.Tuple[dict, dict, dict, dict]:
     for name, value in typing.get_type_hints(module_class).items():
         if isinstance(value, type) and issubclass(value, Module):
             submodules[name] = value
-        elif isinstance(value, type) and issubclass(value, Register):
+        elif isinstance(value, type) and issubclass(value, _Register):
             registers[name] = value
         else:
             # let common coding mistakes produce an error
-            if isinstance(value, Register):
+            if isinstance(value, _Register):
                 raise ValueError(f"Register {name} should not be instantiated. "
                                  f"Type annotations require the type, not an "
                                  f"instance. Consider removing `()` from the "
@@ -43,7 +43,7 @@ def scan_module_class(module_class) -> typing.Tuple[dict, dict, dict, dict]:
         value = getattr(module_class, name)
         if is_logic(value):
             logic[name] = value
-        elif isinstance(value, Register):
+        elif isinstance(value, _Register):
             logger.warning(f"The register {name} was already instantiated. This is "
                            f"currently discouraged and not fully supported.")
             registers[name] = value
@@ -73,7 +73,7 @@ class Module:
                 setattr(cls, name, register)
             else:
                 # register was already instantiated
-                assert isinstance(register, Register)
+                assert isinstance(register, _Register)
                 assert register.name == name
         # 3. insert call to _init_module into constructor for submodule instantiation at runtime
         old_init = functools.partial(cls.__init__)
@@ -139,3 +139,7 @@ class TopModule(Module):
         else:
             interface = RemoteInterface(host=host, result_path=builder.result_path)
         return cls(*args, interface=interface, **kwargs)
+
+    def stop(self):
+        self._interface.stop()
+    

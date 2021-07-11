@@ -1,6 +1,7 @@
 from ..interface import BaseInterface
 from .client import Client
 from .server import Server
+from typing import List, Union
 
 
 class RemoteInterface(BaseInterface):
@@ -13,8 +14,21 @@ class RemoteInterface(BaseInterface):
         )
         self.client = Client(host=host, token=self.server.token)
 
-    def read_from_address(self, address: int) -> int:
-        return int(self.client.reads(address, 1)[0])
+    def read_from_address(self, address: int, length: int = 1) -> Union[int, List[int]]:
+        read_value = [int(v) for v in self.client.reads(address, length)]
+        if len(read_value) == 1:
+            return read_value[0]
+        else:
+            return read_value
 
-    def write_to_address(self, address: int, value: int):
-        self.client.writes(address, [int(value)])
+    def write_to_address(self, address: int, value: Union[int, List[int]]):
+        try:
+            write_value = [int(v) for v in value]
+        except TypeError:
+            write_value = [int(value)]
+        self.client.writes(address, write_value)
+
+    def stop(self):
+        self.client.stop()
+        self.server.stop()
+        

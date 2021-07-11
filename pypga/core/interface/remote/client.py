@@ -33,10 +33,10 @@ class Client:
                 break
         data = data.decode("ascii")
         if data != '1'*32:
-            raise RuntimeError(f"Wrong authentification token: {self._token} != {data}. This may mean "
+            raise RuntimeError(f"Wrong authentication token: {self._token} != {data}. This may mean "
                                f"that another client has connected to your redpitaya. Try restarting.")
         else:
-            logging.debug(f"Correct authentification token: {self._token} / {data}")
+            logging.debug(f"Correct authentication token: {self._token} / {data}")
 
     def stop(self):
         try:

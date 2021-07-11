@@ -5,8 +5,8 @@ from .clock import Clock
 
 
 class Stemlab125_14(TopModule):
-    clock: Clock
-    dac: Dac
+    clock: Clock()
+    dac: Dac()
     adc: Adc
     #
     # @logic

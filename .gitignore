@@ -144,3 +144,6 @@ out/
 
 # notebooks
 *.ipynb
+
+
+.vscode/

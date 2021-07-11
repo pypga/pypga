@@ -1,5 +1,4 @@
-from migen import *
-from ..core import Module, logic, Register
+from ..core import Module, logic, Register, Signal
 
 
 def SingleLed(counter_width=32, default_rate=2**6):
@@ -15,7 +14,7 @@ def SingleLed(counter_width=32, default_rate=2**6):
     return _SingleLed
 
 
-class FourLeds(Module):
+class ExampleLeds(Module):
     led0: SingleLed(default_rate=2**4)
     led1: SingleLed(default_rate=2**5)
     led2: SingleLed(default_rate=2**6)

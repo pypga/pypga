@@ -3,7 +3,7 @@ from .settings import settings
 
 
 class CustomizableMixin:
-    """A minx-in to add a classmethod ``custom`` to any class."""
+    """A mix-in to add a classmethod ``custom`` to any class."""
 
     @classmethod
     def custom(cls, **kwargs):

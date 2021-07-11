@@ -14,7 +14,7 @@ to the server, which in return accepts the connection. The server then forks
 such that one server process waits for new incoming connections and the other
 one executes the sequence detailed below. To make sure that the
 client connects to the right server, the client must initially send the
-32-character authentification token. It the wrong token was sent, the server
+32-character authentication token. It the wrong token was sent, the server
 closes the connection. If the right token was sent, the following protocol is
 executed indefinitely.
 
@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
                   error("ERROR on accept");
              else
                   printf("Incoming client connection accepted!");
-             //authentification procedure
+             //authentication procedure
              bzero(buffer,33);
              n = recv(newsockfd,buffer,32,MSG_WAITALL);
              if (n < 0) error("ERROR reading from socket");
@@ -215,7 +215,7 @@ int main(int argc, char *argv[])
                  n = send(newsockfd,(void*)token,32,0);
                  if (n < 0) error("ERROR writing to socket");
                  if (n != 32) error("ERROR wrote incorrect number of bytes to socket");
-                 error("Authentification failure - wrong token. Terminating client!");
+                 error("Authentication failure - wrong token. Terminating client!");
              }
              //confirm connection by sending a constant token back to the client
              n = send(newsockfd,(void*)("11111111111111111111111111111111"),32,0);
@@ -281,7 +281,10 @@ unsigned long* read_values(unsigned long a_addr, unsigned long* a_values_buffer,
 	void* virt_addr = map_base + (a_addr & MAP_MASK);
 	unsigned long i;
 	for (i = 0; i < a_len; i++) {
-		a_values_buffer[i] = ((unsigned long*) virt_addr)[i];
+		//a_values_buffer[i] = ((unsigned long*) virt_addr)[i];
+        if (a_len > 1)
+            ((unsigned long *) virt_addr)[0] = i;
+		a_values_buffer[i] = ((unsigned long*) virt_addr)[0];
 	}
 
 	if (map_base != (void*)(-1)) {
@@ -303,7 +306,8 @@ void write_values(unsigned long a_addr, unsigned long* a_values, unsigned long a
 	void* virt_addr = map_base + (a_addr & MAP_MASK);
 	unsigned long i;
 	for (i = 0; i < a_len; i++) {
-				((unsigned long *) virt_addr)[i] = a_values[i];
+        // ((unsigned long *) virt_addr)[i] = a_values[i];
+        ((unsigned long *) virt_addr)[0] = a_values[i];
 	}
 	
 	if (map_base != (void*)(-1)) {

@@ -1,6 +1,11 @@
 import pytest
 
 
-@pytest.fixture
-def client():
-    client = ... 
+@pytest.fixture(scope="session")
+def host():
+    return "rp"
+
+
+@pytest.fixture(scope="session")
+def board():
+    return "stemlab125_14"

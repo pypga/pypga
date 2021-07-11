@@ -1,4 +1,4 @@
-from migen import *
+from migen import Memory
 from ..core import Module, logic, Register, Signal, MigenModule
 
 
@@ -35,8 +35,8 @@ class MigenRam(MigenModule):
         self.data = data
 
 
-def RomTest(data: list, width: int = None):
-    width, depth = MigenRom._get_width_and_depth(data, width)
+def ExampleRam(data: list, width: int = None):
+    width, depth = MigenRam._get_width_and_depth(data, width)
 
     class _RomTest(Module):
         index: Register.custom(width=depth, default=0)
@@ -45,7 +45,7 @@ def RomTest(data: list, width: int = None):
 
         @logic
         def _rom_logic(self):
-            self.submodules.rom = MigenRom(index=self.index, data=data, width=width)
+            self.submodules.rom = MigenRam(index=self.index, data=data, width=width)
             self.comb += [
                 self.value.eq(self.rom.value),
             ]
