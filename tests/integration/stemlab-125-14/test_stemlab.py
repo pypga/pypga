@@ -12,6 +12,6 @@ class TestStemlab(BaseIntegrationTest):
 
     def test_out_range(self, dac):
         assert dac.out1 < 1        
-        assert dac.out1 > 0
+        assert dac.out1 > -1
         assert dac.out2 < 1        
         assert dac.out2 > -1
