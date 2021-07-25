@@ -53,22 +53,25 @@ class AutoMigenModule(MigenModule, AutoCSR):
             register = register()  # create a register instance to retrieve attributes in case a class was passed
         logger.debug(f"Creating register {name} of type {register.__class__.__name__}.")
         name_csr = f"{name}_csr"
-        if register.readonly and register.depth == 1:
-            register_instance = CSRStatus(size=register.width, reset=register.default, name=name_csr)
-            setattr(self, name_csr, register_instance)
-            setattr(self, name, register_instance.status)
-        elif register.readonly and register.depth > 1:
-            register_instance = CSRStorage(size=register.width, reset=register.default, name=name_csr, write_from_dev=True)
-            setattr(self, name_csr, register_instance)
-            setattr(self, name, register_instance.dat_w)
-            setattr(self, f"{name}_re", register_instance.re)
-            setattr(self, f"{name}_we", register_instance.we)
-            setattr(self, f"{name}_index", register_instance.storage)
-        else:
-            register_instance = CSRStorage(size=register.width, reset=register.default, name=name_csr)
-            setattr(self, name_csr, register_instance)
-            setattr(self, name, register_instance.storage)
-            setattr(self, f"{name}_re", register_instance.re)
+        if register.depth == 1:
+            if register.readonly:
+                register_instance = CSRStatus(size=register.width, reset=register.default, name=name_csr)
+                setattr(self, name_csr, register_instance)
+                setattr(self, name, register_instance.status)
+            else:
+                register_instance = CSRStorage(size=register.width, reset=register.default, name=name_csr)
+                setattr(self, name_csr, register_instance)
+                setattr(self, name, register_instance.storage)
+                setattr(self, f"{name}_re", register_instance.re)
+        else:  # register has nontrivial depth
+            if register.readonly:
+                register_instance = CSRStorage(size=register.width, reset=register.default, name=name_csr, write_from_dev=True)
+                setattr(self, name_csr, register_instance)
+                setattr(self, name, register_instance.dat_w)
+                setattr(self, f"{name}_re", register_instance.re)
+                setattr(self, f"{name}_we", register_instance.we)
+                setattr(self, f"{name}_index", register_instance.storage)
+ 
 
     def _add_logic_function(self, logic_function, name, platform):
         logger.debug(f"Implementing logic from function {name}.")

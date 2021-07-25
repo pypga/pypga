@@ -47,8 +47,6 @@ class TestMigenPulseGenConstantPeriod(TestMigenPulseGenIntPeriod):
     period_type = Constant
 
 
-
-@pytest.mark.xfail(reason="I can only suspect the simulator does not behave as the hardware")
 class TestMigenPulseGenSignalPeriod(TestMigenPulseGenIntPeriod):
     def period_type(self, period):
         return Signal(32, reset=period)

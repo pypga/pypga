@@ -143,3 +143,7 @@ class TopModule(Module):
     def stop(self):
         self._interface.stop()
     
+    def __del__(self):
+        self.stop()
+        super().__del__()
+        
