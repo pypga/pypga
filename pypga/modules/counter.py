@@ -1,3 +1,4 @@
+from migen import Cat, Constant
 from ..core import Module, logic, Register, BoolRegister, MigenModule, Signal, If
 
 
@@ -25,45 +26,44 @@ class MigenCounter(MigenModule):
               the counter wraps through zero.
             done: high when the counter value is equal or beyond ``stop``.
         """
-        self.count = Signal(width)
-        self.carry = Signal()
-        self.done = Signal()
+        self.count = Signal(width+1)
+        self.carry = Signal(1)
+        self.done = Signal(reset=0)
         ###
-        count_with_carry = Signal(width+1, reset=start if isinstance(start, int) else start.reset)
-        done = Signal(reset=0)
+        if isinstance(start, int):
+            initial_count = start
+        else:
+            initial_count = start.reset
+        count_with_carry = Signal(width+1, reset=initial_count)
         self.comb += [
-            self.count.eq(count_with_carry[:-1]),
+            self.count.eq(Cat(count_with_carry[:-1], 0)),
             self.carry.eq(count_with_carry[-1]),
         ]
         if stop is not None:
-            self.comb += If(
-                (self.count >= stop) if direction == "up" else (self.count <= stop),
-                done.eq(1)).Else(done.eq(0)
-            )
+            self.comb += If((self.count == stop), self.done.eq(1)).Else(self.done.eq(0))
         self.sync += [
-            If(reset == 1,
-               count_with_carry.eq(start),
-               self.done.eq(0)
-            ).Elif(self.done == 0,
-                   self.done.eq(done),
-                   If(on==1,
-                      count_with_carry.eq((self.count + step) if direction == "up" else (self.count - step))
-                   ),
+            If(
+                reset == 1,
+                count_with_carry.eq(start),
+            ).Elif(
+                (~self.done & on) == 1,
+                count_with_carry.eq(self.count + step) if direction == "up" else count_with_carry.eq(self.count - step) 
             )
         ]
 
 
-def CounterTest(width=32, default_start=0, default_stop=None, default_step=1, direction="up"):
+def ExampleCounter(width=32, default_start=0, default_stop=None, default_step=1, default_on=True, direction="up"):
     class _CounterTest(Module):
-        start: Register.custom(width=width, default=default_start)
-        step: Register.custom(width=width, default=default_step)
+        start: Register(width=width, default=default_start)
+        step: Register(width=width, default=default_step)
         if default_stop is not None:
-            stop: Register.custom(width=width, default=default_stop)
-        on: Register.custom(width=1, default=1)
-        reset: Register.custom(width=1, default=0)
-        count: Register.custom(readonly=True, width=width, default=default_start)
-        carry: BoolRegister.custom(readonly=True, width=1, default=0)
-        done: BoolRegister.custom(readonly=True, width=1, default=0)
+            stop: Register(width=width, default=default_stop)
+        on: Register(width=1, default=default_on)
+        reset: Register(width=1, default=0)
+
+        count: Register(readonly=True, width=width, default=default_start)
+        carry: BoolRegister(readonly=True, width=1, default=0)
+        done: BoolRegister(readonly=True, width=1, default=0)
 
         @logic
         def _counter_logic(self):
@@ -73,6 +73,7 @@ def CounterTest(width=32, default_start=0, default_stop=None, default_step=1, di
                 step=self.step,
                 on=self.on,
                 reset=self.reset_re,
+                direction=direction,
             )
             self.comb += [
                 self.count.eq(self.counter.count),
@@ -81,4 +82,3 @@ def CounterTest(width=32, default_start=0, default_stop=None, default_step=1, di
             ]
 
     return _CounterTest
-

@@ -4,11 +4,13 @@ from .common import CustomizableMixin
 logger = logging.getLogger(__name__)
 
 
-class Register(CustomizableMixin):
+class _Register(CustomizableMixin):
     name: str = None
     width: int = 1
     default: int = 0
     readonly: bool = False
+    offset_from_python: int = 0  # fpga value = Python value + offset_from_python
+    depth: int = 1
     doc: str = ""
 
     _SEP = "_"
@@ -22,10 +24,12 @@ class Register(CustomizableMixin):
         return f"{parents[0]}.{'_'.join(parents[1:] + [self.name])}_csr"
 
     def to_python(self, instance, value):
+        value -= self.offset_from_python
         return value
 
     def from_python(self, instance, value):
         value = int(value)
+        value += self.offset_from_python
         if value < 0:
             value = 0
             logger.warning(f"Negative saturation of register {self.name}")
@@ -34,31 +38,39 @@ class Register(CustomizableMixin):
             logger.warning(f"Positive saturation of register {self.name}")
         return value
 
+    def before_from_python(self, instance, value):
+        return value
+
     def __get__(self, instance, owner=None):
         logger.debug(f"Reading {self.name} with {instance}/{owner}")
         if instance is None:
             return self
-        value = instance._interface.read(self._get_full_name(instance))
-        return self.to_python(instance, value)
+        if self.depth == 1:
+            value = instance._interface.read(self._get_full_name(instance))
+            return self.to_python(instance, value)
+        else:
+            value = instance._interface.read_array(self._get_full_name(instance), length=self.depth)
+            return [self.to_python(instance, v) for v in value]
 
     def __set__(self, instance, value):
         if self.readonly:
             raise ValueError(f"The register {self.instance.name}.{self.name} is read-only.")
-        value = self.before_from_python(instance, value)
-        value = self.from_python(instance, value)
-        instance._interface.write(self._get_full_name(instance), value)
+        if self.depth == 1:
+            value = self.before_from_python(instance, value)
+            value = self.from_python(instance, value)
+            instance._interface.write(self._get_full_name(instance), value)
+        else:
+            value = [self.before_from_python(instance, v) for v in value]
+            value = [self.from_python(instance, v) for v in value]
+            instance._interface.write_array(self._get_full_name(instance), value)
 
-    def before_from_python(self, instance, value):
-        return value
 
-
-class BoolRegister(Register):
+class _BoolRegister(_Register):
     invert: bool = False
     bit: int = 0
-    width: int = 1
 
     def to_python(self, instance, value):
-        value = Register.to_python(self, instance, value)
+        value = _Register.to_python(self, instance, value)
         value = bool((value >> self.bit) & 0x1)
         if self.invert:
             value = not value
@@ -68,11 +80,11 @@ class BoolRegister(Register):
         if self.invert:
             value = not bool(value)
         value = int(bool(value)) << self.bit
-        value = Register.from_python(self, instance, value)
+        value = _Register.from_python(self, instance, value)
         return value
 
 
-class NumberRegister(Register):
+class _NumberRegister(_Register):
     signed: bool = False
     min: int = None
     max: int = None
@@ -92,7 +104,7 @@ class NumberRegister(Register):
             return 0
 
     def to_python(self, instance, value):
-        value = Register.to_python(self, instance, value)
+        value = _Register.to_python(self, instance, value)
         if self.signed and value >= (1 << (self.width - 1)):
             value -= (1 << self.width)
         return int(value)
@@ -116,21 +128,29 @@ class NumberRegister(Register):
             logger.warning(f"Positive saturation for {self.name}")
         if self.signed and value < 0:
             value += (1 << self.width)
-        value = Register.from_python(self, instance, value)
+        value = _Register.from_python(self, instance, value)
         return value
 
 
-class FixedPointRegister(NumberRegister):
+class _FixedPointRegister(_NumberRegister):
     decimals: int = 0
     min: float = None
     max: float = None
 
     def to_python(self, instance, value):
-        value = NumberRegister.to_python(self, instance, value)
+        value = _NumberRegister.to_python(self, instance, value)
         value = float(value) / (2 ** self.decimals - 1)
         return value
 
     def from_python(self, instance, value):
         value = int(round(float(value) * (2 ** self.decimals - 1)))
-        value = NumberRegister.from_python(self, instance, value)
+        value = _NumberRegister.from_python(self, instance, value)
         return value
+
+
+Register = _Register.custom
+BoolRegister = _BoolRegister.custom
+NumberRegister = _NumberRegister.custom
+FixedPointRegister = _FixedPointRegister.custom
+# TODO: add CallableBoolRegister
+# TODO: add explicit arguments to custom for type completion

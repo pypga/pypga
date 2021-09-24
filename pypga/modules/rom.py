@@ -1,10 +1,10 @@
-from migen import *
-from ..core import Module, logic, Register, Signal, MigenModule
+from migen import Memory, Cat
+from ..core import Module, logic, Register, Signal, If, MigenModule
 
 
 class MigenRom(MigenModule):
     @staticmethod
-    def _get_width_and_depth(data, width):
+    def _get_width_and_depth(data, width=None):
         if width is None:
             assert min(data) >= 0
             width = max(data).bit_length()
@@ -37,27 +37,21 @@ class MigenRom(MigenModule):
         self.data = data
 
 
-def RomTest(data: list, width: int = None):
+
+def ExampleRom(data: list, width: int = None):
     width, depth = MigenRom._get_width_and_depth(data, width)
 
-    class _RomTest(Module):
-        index: Register.custom(width=depth, default=0)
-        value: Register.custom(width=width, readonly=True, default=0)
+    class _ExampleRom(Module):
+        value: Register(width=width, readonly=True, default=0, depth=depth)
         _data = data
 
         @logic
         def _rom_logic(self):
-            self.submodules.rom = MigenRom(index=self.index, data=data, width=width)
+            self.submodules.rom = MigenRom(index=self.value_index, data=data, width=width)
             self.comb += [
-                self.value.eq(self.rom.value),
+                self.value.eq(self.rom.value)
             ]
-
-        def _get(self, index):
-            self.index = index
-            return self.value
-
-        @property
-        def values(self):
-            return [self._get(index) for index in range(len(self._data))]
-
-    return _RomTest
+            self.sync += [
+                self.value_we.eq(self.value_re),
+            ]
+    return _ExampleRom
