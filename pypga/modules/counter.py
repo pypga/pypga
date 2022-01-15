@@ -1,5 +1,5 @@
 from migen import Cat, Constant
-from ..core import Module, logic, Register, BoolRegister, MigenModule, Signal, If
+from ..core import Module, logic, Register, BoolRegister, TriggerRegister, MigenModule, Signal, If
 
 
 class MigenCounter(MigenModule):
@@ -59,7 +59,7 @@ def ExampleCounter(width=32, default_start=0, default_stop=None, default_step=1,
         if default_stop is not None:
             stop: Register(width=width, default=default_stop)
         on: Register(width=1, default=default_on)
-        reset: Register(width=1, default=0)
+        reset: TriggerRegister()
 
         count: Register(readonly=True, width=width, default=default_start)
         carry: BoolRegister(readonly=True, width=1, default=0)
@@ -72,7 +72,7 @@ def ExampleCounter(width=32, default_start=0, default_stop=None, default_step=1,
                 stop=None if default_stop is None else self.stop,
                 step=self.step,
                 on=self.on,
-                reset=self.reset_re,
+                reset=self.reset,
                 direction=direction,
             )
             self.comb += [

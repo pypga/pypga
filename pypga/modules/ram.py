@@ -1,5 +1,5 @@
-from migen import Memory, Cat
-from ..core import Module, logic, Register, Signal, If, MigenModule
+from migen import Memory, Signal
+from ..core import Module, logic, Register, MigenModule
 
 
 class MigenRam(MigenModule):
@@ -36,46 +36,3 @@ class MigenRam(MigenModule):
         self.width = width
         self.depth = depth
         self.data = data
-
-
-def ExampleRom(data: list, width: int = None):
-    width, depth = MigenRam._get_width_and_depth(data, width)
-
-    class _ExampleRom(Module):
-        value: Register(width=width, readonly=True, default=0, depth=depth)
-        _data = data
-
-        @logic
-        def _rom_logic(self):
-            self.submodules.rom = MigenRam(index=self.value_index, data=data, width=width, readonly=True)
-            self.comb += [
-                self.value.eq(self.rom.value)
-            ]
-            self.sync += [
-                self.value_we.eq(self.value_re),
-            ]
-    return _ExampleRom
-
-
-def ExampleRam(data: list = None, width: int = None):
-    width, depth = MigenRam._get_width_and_depth(data, width)
-
-    class _ExampleRam(Module):
-        value: Register(width=width, readonly=True, default=0, depth=depth)
-        _data = data
-
-        @logic
-        def _rom_logic(self):
-            self.submodules.rom = MigenRam(index=self.value_index, data=data, width=width, readonly=False)
-            self.we = self.rom.port.we
-            """set self.we to high to enable writing the data in dat_w"""
-            self.dat_w = self.rom.port.dat_w
-            """set self.dat_w to the data to write"""
-            self.comb += [
-                self.value.eq(self.rom.value)
-            ]
-            self.sync += [
-                self.value_we.eq(self.value_re),
-            ]
-    return _ExampleRam
-

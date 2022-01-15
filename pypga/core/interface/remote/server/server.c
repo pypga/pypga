@@ -280,13 +280,12 @@ unsigned long* read_values(unsigned long a_addr, unsigned long* a_values_buffer,
 	
 	void* virt_addr = map_base + (a_addr & MAP_MASK);
 	unsigned long i;
-	for (i = 0; i < a_len; i++) {
-		//a_values_buffer[i] = ((unsigned long*) virt_addr)[i];
-        if (a_len > 1)
-            ((unsigned long *) virt_addr)[0] = i;
-		a_values_buffer[i] = ((unsigned long*) virt_addr)[0];
-	}
-
+    if (a_len > 1) for (i = 0; i < a_len; i++) {
+        ((unsigned long *) virt_addr)[0] = (i << 1) | 1;
+        a_values_buffer[i] = ((unsigned long*) virt_addr)[0];
+    }
+    else a_values_buffer[0] = ((unsigned long*) virt_addr)[0];
+    
 	if (map_base != (void*)(-1)) {
 		if(munmap(map_base, MAP_SIZE) == -1) FATAL;
 		map_base = (void*)(-1);
@@ -305,10 +304,12 @@ void write_values(unsigned long a_addr, unsigned long* a_values, unsigned long a
 	
 	void* virt_addr = map_base + (a_addr & MAP_MASK);
 	unsigned long i;
-	for (i = 0; i < a_len; i++) {
-        // ((unsigned long *) virt_addr)[i] = a_values[i];
-        ((unsigned long *) virt_addr)[0] = a_values[i];
-	}
+
+	if (a_len > 1) for (i = 0; i < a_len; i++) {
+        ((unsigned long *) virt_addr)[0] = (i << 1) | 1;
+        ((unsigned long *) virt_addr)[0] = a_values[i] << 1;
+    }
+	else ((unsigned long *) virt_addr)[0] = a_values[0];
 	
 	if (map_base != (void*)(-1)) {
 		if(munmap(map_base, MAP_SIZE) == -1) FATAL;

@@ -1,5 +1,5 @@
 from pypga.core import TopModule, logic
-from pypga.modules.awg import ExampleRomAwg
+from pypga.modules.awg import Awg
 from pypga.modules.pulsegen import ExamplePulseGen, MigenPulseGen
 from pypga.modules.counter import ExampleCounter
 from pypga.boards.stemlab125_14.modules.dac import Dac
@@ -11,7 +11,7 @@ from pypga.core.register import Register
 class MyStemlabTest(TopModule):
     _clock: Clock()
     _dac: Dac()
-    awg: ExampleRomAwg(data=[i for i in range(2**13-1)])
+    awg: Awg(data=[i for i in range(2**13-1)])
     gpio: ExampleGpio(set_from_python=False)
     pulsegen0: ExamplePulseGen(default_period=1111)
     pulsegen1: ExamplePulseGen(high_after_on=False)

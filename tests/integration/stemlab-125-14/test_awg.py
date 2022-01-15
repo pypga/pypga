@@ -1,4 +1,4 @@
-from pypga.modules.awg import ExampleRomAwg
+from pypga.modules.awg import Awg
 from pypga.core import TopModule
 import pytest
 import time
@@ -6,7 +6,7 @@ import math
 
 
 class MyExampleAwg(TopModule):
-    rom_awg: ExampleRomAwg(data=[i for i in range(100)])
+    rom_awg: Awg(data=[i for i in range(100)])
 
 
 @pytest.fixture(scope="module")
@@ -22,7 +22,7 @@ class TestRomAwg:
         yield awg
 
     def test_value_in_range(self, awg):
-        data = [awg.value for _ in range(1000)]
+        data = [awg.out for _ in range(1000)]
         mini, maxi = min(data), max(data)
         assert mini >= 0
         assert mini <= 10

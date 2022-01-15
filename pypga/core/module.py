@@ -145,5 +145,4 @@ class TopModule(Module):
     
     def __del__(self):
         self.stop()
-        super().__del__()
         
