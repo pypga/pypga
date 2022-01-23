@@ -1,13 +1,24 @@
-from ..core import Module, MigenModule, logic, Register, NumberRegister, BoolRegister, Signal
+from pypga.core import Module, MigenModule, logic, Register, NumberRegister, BoolRegister, Signal
 from .counter import MigenCounter
 from .pulsegen import MigenPulseGen
 from .ram import MigenRam
 
+"""
+    Trigger 
+    -> reset counter
+    -> start PulseGen sequence of pulses sampling_period apart 
+       -> pulsegen busy
+       -> Counter counts pulses 
+          -> count looks up value from table to output 
+          -> count reaching max stops the pulsegen
+"""
 
-def Awg(data: list, default_on=True, sampling_period_width=32, default_period=8, repetitions_width=32, reset=None):
+
+class MigenAwg(MigenModule):
+    def __init__(self, data: list, default_on=True, sampling_period_width=32, default_period=8, repetitions_width=32, reset=None):
     """
     A programmable AWG module.
-
+    
     Args:
         data (list): initial values of the AWG.
         width (int or NoneType): the bit-width of each value, or None to
@@ -18,7 +29,7 @@ def Awg(data: list, default_on=True, sampling_period_width=32, default_period=8,
         reset: resets the AWG to its initial state. If None, the 
             AWG is automatically reset when it's done.
         sampling_period: the sampling period.
-
+    
     Output signals:
         value: a signal with the ROM value at the current index.
     """

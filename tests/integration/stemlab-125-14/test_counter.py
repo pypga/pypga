@@ -1,4 +1,4 @@
-from pypga.modules.counter import ExampleCounter
+from pypga.modules.counter import Counter
 from pypga.core import TopModule
 import pytest
 import time
@@ -6,7 +6,7 @@ import math
 
 
 class MyExampleCounter(TopModule):
-    default_counter: ExampleCounter()
+    default_counter: Counter()
 
     _custom_up_counter_kwargs = {
         "width": 27,
@@ -15,7 +15,7 @@ class MyExampleCounter(TopModule):
         "default_stop": 2**27-3,
         "default_on": False,
     }
-    custom_up_counter: ExampleCounter(**_custom_up_counter_kwargs, direction="up")
+    custom_up_counter: Counter(**_custom_up_counter_kwargs, direction="up")
 
     _custom_down_counter_kwargs = {
         "width": 27,
@@ -24,7 +24,7 @@ class MyExampleCounter(TopModule):
         "default_stop": 100,
         "default_on": False,
     }
-    custom_down_counter: ExampleCounter(**_custom_down_counter_kwargs, direction="down")
+    custom_down_counter: Counter(**_custom_down_counter_kwargs, direction="down")
 
 
 @pytest.fixture(scope="module")

@@ -1,4 +1,4 @@
-from ..core import Module, logic, Register, Signal
+from pypga.core import Module, logic, Register, Signal
 
 
 def SingleLed(counter_width=32, default_rate=2**6):

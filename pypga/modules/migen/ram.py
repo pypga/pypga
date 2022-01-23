@@ -1,5 +1,5 @@
 from migen import Memory, Signal
-from ..core import Module, logic, Register, MigenModule
+from pypga.core import Module, logic, Register, MigenModule
 
 
 class MigenRam(MigenModule):
@@ -12,7 +12,7 @@ class MigenRam(MigenModule):
 
     def __init__(self, index, data: list, width: int = None, readonly=False):
         """
-        A read-only memory module.
+        A memory module.
 
         Args:
             index (Signal): the signal to provide the index
