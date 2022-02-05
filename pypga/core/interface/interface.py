@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from .csrmap import CsrMap
 from typing import List, Union
+
+from .csrmap import CsrMap
 
 
 class BaseInterface(ABC):

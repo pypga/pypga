@@ -1,5 +1,6 @@
-from .. import TopModule
 import pytest
+
+from .. import TopModule
 
 
 class BaseIntegrationTest:
@@ -11,4 +12,3 @@ class BaseIntegrationTest:
         dut = self.DUT.run(host=host, board=board)
         yield dut
         dut.stop()
-

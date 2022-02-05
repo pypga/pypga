@@ -1,7 +1,7 @@
-from pypga.core import Module, logic, Register, Signal
+from pypga.core import Module, Register, Signal, logic
 
 
-def SingleLed(counter_width=32, default_rate=2**6):
+def SingleLed(counter_width=32, default_rate=2 ** 6):
     class _SingleLed(Module):
         rate: Register.custom(width=counter_width, default=default_rate)
 
@@ -15,9 +15,9 @@ def SingleLed(counter_width=32, default_rate=2**6):
 
 
 class ExampleLeds(Module):
-    led0: SingleLed(default_rate=2**4)
-    led1: SingleLed(default_rate=2**5)
-    led2: SingleLed(default_rate=2**6)
+    led0: SingleLed(default_rate=2 ** 4)
+    led1: SingleLed(default_rate=2 ** 5)
+    led2: SingleLed(default_rate=2 ** 6)
     led3_on: Register.custom(reset=1)
 
     @logic

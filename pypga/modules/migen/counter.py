@@ -1,9 +1,12 @@
 from migen import Cat
-from pypga.core import MigenModule, Signal, If
+
+from pypga.core import If, MigenModule, Signal
 
 
 class MigenCounter(MigenModule):
-    def __init__(self, start=0, stop=None, step=1, reset=0, on=1, width=32, direction="up"):
+    def __init__(
+        self, start=0, stop=None, step=1, reset=0, on=1, width=32, direction="up"
+    ):
         """
         Counter that can count either "up" or "down".
 
@@ -26,7 +29,7 @@ class MigenCounter(MigenModule):
               the counter wraps through zero.
             done: high when the counter value is equal or beyond ``stop``.
         """
-        self.count = Signal(width+1)
+        self.count = Signal(width + 1)
         self.carry = Signal(1)
         self.done = Signal(reset=0)
         ###
@@ -34,7 +37,7 @@ class MigenCounter(MigenModule):
             initial_count = start
         else:
             initial_count = start.reset
-        count_with_carry = Signal(width+1, reset=initial_count)
+        count_with_carry = Signal(width + 1, reset=initial_count)
         self.comb += [
             self.count.eq(Cat(count_with_carry[:-1], 0)),
             self.carry.eq(count_with_carry[-1]),
@@ -42,11 +45,10 @@ class MigenCounter(MigenModule):
         if stop is not None:
             self.comb += If((self.count == stop), self.done.eq(1)).Else(self.done.eq(0))
         self.sync += [
-            If(
-                reset == 1,
-                count_with_carry.eq(start),
-            ).Elif(
+            If(reset == 1, count_with_carry.eq(start),).Elif(
                 (~self.done & on) == 1,
-                count_with_carry.eq(self.count + step) if direction == "up" else count_with_carry.eq(self.count - step) 
+                count_with_carry.eq(self.count + step)
+                if direction == "up"
+                else count_with_carry.eq(self.count - step),
             )
         ]

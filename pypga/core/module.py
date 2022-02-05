@@ -1,11 +1,12 @@
 import functools
 import logging
 import typing
-from .register import _Register
-from .logic_function import is_logic
-from .interface import RemoteInterface, LocalInterface
-from .builder import get_builder
+from typing import Callable
 
+from .builder import get_builder
+from .interface import LocalInterface, RemoteInterface
+from .logic_function import is_logic
+from .register import _Register
 
 logger = logging.getLogger(__name__)
 
@@ -28,15 +29,19 @@ def scan_module_class(module_class) -> typing.Tuple[dict, dict, dict, dict]:
         else:
             # let common coding mistakes produce an error
             if isinstance(value, _Register):
-                raise ValueError(f"Register {name} should not be instantiated. "
-                                 f"Type annotations require the type, not an "
-                                 f"instance. Consider removing `()` from the "
-                                 f"register definition.")
+                raise ValueError(
+                    f"Register {name} should not be instantiated. "
+                    f"Type annotations require the type, not an "
+                    f"instance. Consider removing `()` from the "
+                    f"register definition."
+                )
             elif isinstance(value, Module):
-                raise ValueError(f"Submodule {name} should not be instantiated. "
-                                 f"Type annotations require the type, not an "
-                                 f"instance. Consider removing `()` from the "
-                                 f"module definition.")
+                raise ValueError(
+                    f"Submodule {name} should not be instantiated. "
+                    f"Type annotations require the type, not an "
+                    f"instance. Consider removing `()` from the "
+                    f"module definition."
+                )
             else:
                 logger.debug(f"Ignoring annotated type {name}: {value}.")
     for name in dir(module_class):
@@ -44,8 +49,10 @@ def scan_module_class(module_class) -> typing.Tuple[dict, dict, dict, dict]:
         if is_logic(value):
             logic[name] = value
         elif isinstance(value, _Register):
-            logger.warning(f"The register {name} was already instantiated. This is "
-                           f"currently discouraged and not fully supported.")
+            logger.warning(
+                f"The register {name} was already instantiated. This is "
+                f"currently discouraged and not fully supported."
+            )
             registers[name] = value
         else:
             if not name.startswith("__"):
@@ -62,7 +69,12 @@ class Module:
     def __init_subclass__(cls):
         logger.debug(f"Running {cls}.__init_subclass__.")
         # 1. extract which registers and submodules are defined
-        cls._pypga_registers, cls._pypga_logic, cls._pypga_submodules, other = scan_module_class(cls)
+        (
+            cls._pypga_registers,
+            cls._pypga_logic,
+            cls._pypga_submodules,
+            other,
+        ) = scan_module_class(cls)
         # 2. instantiate all registers
         for name, register_cls in cls._pypga_registers.items():
             try:
@@ -77,10 +89,12 @@ class Module:
                 assert register.name == name
         # 3. insert call to _init_module into constructor for submodule instantiation at runtime
         old_init = functools.partial(cls.__init__)
+
         @functools.wraps(cls.__init__)
         def new_init(self, *args, name="top", parent=None, interface=None, **kwargs):
             self._init_module(name, parent, interface)
             old_init(self, *args, **kwargs)
+
         cls.__init__ = new_init
         # 4. compute hash for module
         cls._hash = hash_module(cls)
@@ -90,12 +104,16 @@ class Module:
         if hasattr(self, "_parent") and hasattr(self, "_interface"):
             logger.debug(f"Skipping {self}._init_module because it has already run.")
             return
-        logger.debug(f"Running {self}._init_module(self={self}, parent={parent}, interface={interface}).")
+        logger.debug(
+            f"Running {self}._init_module(self={self}, parent={parent}, interface={interface})."
+        )
         self._name = name
         self._parent = parent
         self._interface = interface
         for name, submodule_cls in self._pypga_submodules.items():
-            setattr(self, name, submodule_cls(name=name, parent=self, interface=interface))
+            setattr(
+                self, name, submodule_cls(name=name, parent=self, interface=interface)
+            )
 
     def _get_parents(self):
         parents = [self._name]
@@ -111,7 +129,18 @@ class Module:
 
     @property
     def registers(self):
-        return {name: getattr(self, name) for name in self._pypga_registers}
+        registers = {name: getattr(self, name) for name in self._pypga_registers}
+        return {k: v for k, v in registers.items() if not isinstance(v, Callable)}
+
+    @property
+    def _clock_period(self):
+        # TODO: generalize to multiple boards
+        return 8e-9
+
+    @property
+    def _clock_rate(self):
+        # TODO: generalize to multiple boards
+        return 1 / self._clock_period
 
 
 DEFAULT_BOARD = "stemlab125_14"
@@ -132,8 +161,10 @@ class TopModule(Module):
             if autobuild:
                 builder.build()
             else:
-                raise ValueError("The design you are trying to instantiate must be built first. Try "
-                                 "running this function call with the argument ``autobuild=True``.")
+                raise ValueError(
+                    "The design you are trying to instantiate must be built first. Try "
+                    "running this function call with the argument ``autobuild=True``."
+                )
         if host is None:
             interface = LocalInterface(result_path=builder.result_path)
         else:
@@ -142,7 +173,6 @@ class TopModule(Module):
 
     def stop(self):
         self._interface.stop()
-    
+
     def __del__(self):
         self.stop()
-        

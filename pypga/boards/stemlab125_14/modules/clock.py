@@ -1,5 +1,6 @@
-from migen import Instance, Signal, ClockDomain
-from pypga.core import Module, logic, Register, BoolRegister
+from migen import ClockDomain, Instance, Signal
+
+from pypga.core import BoolRegister, Module, Register, logic
 
 
 def Clock():
@@ -10,14 +11,26 @@ def Clock():
         def __logic__(self, platform):
             # signals for external connectivity
             clk_adc_pins = platform.request("clk125")
-            platform.add_platform_command("create_clock -name clk_adc -period 8 [get_ports {port}]", port=clk_adc_pins.p)  # xdc 208
+            platform.add_platform_command(
+                "create_clock -name clk_adc -period 8 [get_ports {port}]",
+                port=clk_adc_pins.p,
+            )  # xdc 208
             clk_adc_unbuffered = Signal()
             clk_adc_buffered = Signal()
-            self.specials += Instance("IBUFGDS", i_I=clk_adc_pins.p, i_IB=clk_adc_pins.n, o_O=clk_adc_unbuffered)
-            self.specials += Instance("BUFG", i_I=clk_adc_unbuffered, o_O=clk_adc_buffered)
+            self.specials += Instance(
+                "IBUFGDS",
+                i_I=clk_adc_pins.p,
+                i_IB=clk_adc_pins.n,
+                o_O=clk_adc_unbuffered,
+            )
+            self.specials += Instance(
+                "BUFG", i_I=clk_adc_unbuffered, o_O=clk_adc_buffered
+            )
             clk_feedback = Signal()
             clk_feedback_buffered = Signal()
-            self.specials += Instance("BUFG", i_I=clk_feedback, o_O=clk_feedback_buffered)
+            self.specials += Instance(
+                "BUFG", i_I=clk_feedback, o_O=clk_feedback_buffered
+            )
             clk_adc = Signal()
             clk_dac_1p = Signal()
             clk_dac_2x = Signal()
@@ -33,20 +46,16 @@ def Clock():
                     p_DIVCLK_DIVIDE=1,
                     p_CLKIN1_PERIOD=8.000,
                     p_REF_JITTER1=0.010,
-
                     i_RST=~reset,
                     i_CLKIN1=clk_adc_unbuffered,  # top.v 314 uses unbuffered version
                     i_CLKIN2=0,
                     i_CLKINSEL=1,
                     i_PWRDWN=0,
-
                     p_CLKFBOUT_MULT=8,
                     p_CLKFBOUT_PHASE=0.0,
                     o_CLKFBOUT=clk_feedback,
                     i_CLKFBIN=clk_feedback_buffered,
-
                     o_LOCKED=self.locked,
-
                     # dynamic reconfiguration settings, all disabled
                     i_DADDR=0,
                     i_DCLK=0,
@@ -55,32 +64,26 @@ def Clock():
                     i_DWE=0,
                     # o_DO=,
                     # o_DRDY=,
-
                     p_CLKOUT0_DIVIDE=8,  # 125 MHz
                     p_CLKOUT0_PHASE=0.0,
                     p_CLKOUT0_DUTY_CYCLE=0.5,
                     o_CLKOUT0=clk_adc,
-
                     p_CLKOUT1_DIVIDE=8,  # 125 MHz
                     p_CLKOUT1_PHASE=0.000,
                     p_CLKOUT1_DUTY_CYCLE=0.5,
                     o_CLKOUT1=clk_dac_1p,
-
                     p_CLKOUT2_DIVIDE=4,  # 250 MHz
                     p_CLKOUT2_PHASE=0.000,
                     p_CLKOUT2_DUTY_CYCLE=0.5,
                     o_CLKOUT2=clk_dac_2x,
-
                     p_CLKOUT3_DIVIDE=4,  # 250 MHz, 45 degree advanced
                     p_CLKOUT3_PHASE=-45.000,
                     p_CLKOUT3_DUTY_CYCLE=0.5,
                     o_CLKOUT3=clk_dac_2p,
-
                     p_CLKOUT4_DIVIDE=4,  # 250 MHz
                     p_CLKOUT4_PHASE=0.000,
                     p_CLKOUT4_DUTY_CYCLE=0.5,
                     o_CLKOUT4=clk_ser,
-
                     p_CLKOUT5_DIVIDE=4,  # 250 MHz
                     p_CLKOUT5_PHASE=0.000,
                     p_CLKOUT5_DUTY_CYCLE=0.5,
@@ -124,4 +127,5 @@ def Clock():
             # self.clock_domains.sys = ClockDomain()
             # self.sys.clk = self.clk_adc.clk
             # self.sys.rst = self.clk_adc.rst
+
     return _Clock

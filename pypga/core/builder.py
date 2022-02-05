@@ -1,10 +1,10 @@
-from abc import ABC, abstractmethod
 import logging
 import shutil
-from .common import empty_path
-from .settings import settings
-from .migen import AutoMigenModule
+from abc import ABC, abstractmethod
 
+from .common import empty_path
+from .migen import AutoMigenModule
+from .settings import settings
 
 logger = logging.getLogger(__name__)
 builder_registry = {}
@@ -19,15 +19,24 @@ class BaseBuilder(ABC):
 
     def __init_subclass__(cls):
         if cls.board is None:
-            raise ValueError(f"{cls.__name__} is a subclass of BaseBuilder "
-                             f"but does not define the ``board`` attribute.")
+            raise ValueError(
+                f"{cls.__name__} is a subclass of BaseBuilder "
+                f"but does not define the ``board`` attribute."
+            )
         builder_registry[cls.board] = cls
 
     def _get_result_path(self):
-        return (settings.result_path / str(self.board) / self.module_class.__name__ / self.hash).resolve()
+        return (
+            settings.result_path
+            / str(self.board)
+            / self.module_class.__name__
+            / self.hash
+        ).resolve()
 
     def _get_build_path(self):
-        return (settings.build_path / str(self.board) / self.module_class.__name__).resolve()
+        return (
+            settings.build_path / str(self.board) / self.module_class.__name__
+        ).resolve()
 
     @property
     def result_exists(self):
@@ -40,9 +49,11 @@ class BaseBuilder(ABC):
         empty_path(self.result_path)
         for result in self._build_results:
             shutil.copy(self.build_path / result, self.result_path / result)
-        logger.debug(f"Copied all build artifacts for new build of "
-                     f"{self.module_class.__name__} for {self.board} "
-                     f"with hash {self.hash} to {self.result_path}: {self._build_results}")
+        logger.debug(
+            f"Copied all build artifacts for new build of "
+            f"{self.module_class.__name__} for {self.board} "
+            f"with hash {self.hash} to {self.result_path}: {self._build_results}"
+        )
 
     def __init__(self, module_class):
         self.module_class = module_class

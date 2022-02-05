@@ -17,34 +17,36 @@
 ###############################################################################
 
 
-import paramiko
-from time import sleep
-from scp import SCPClient
 import logging
+from time import sleep
+
+import paramiko
+from scp import SCPClient
 
 
 class SshShell(object):
-    """ This is a wrapper around paramiko.SSHClient and scp.SCPClient
+    """This is a wrapper around paramiko.SSHClient and scp.SCPClient
     I provides a ssh connection with the ability to transfer files over it"""
+
     def __init__(
-            self,
-            hostname='localhost',
-            user='root',
-            password='root',
-            delay=0.05, 
-            timeout=3,
-            sshport=22,
-            shell=True,
-            scp=True,
+        self,
+        hostname="localhost",
+        user="root",
+        password="root",
+        delay=0.05,
+        timeout=3,
+        sshport=22,
+        shell=True,
+        scp=True,
     ):
         self._logger = logging.getLogger(name=__name__)
         self.delay = delay
         self.apprunning = False
         self.hostname = hostname
-        self.sshport=sshport
+        self.sshport = sshport
         self.user = user
         self.password = password
-        self.timeout= timeout
+        self.timeout = timeout
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.ssh.connect(
@@ -52,7 +54,8 @@ class SshShell(object):
             username=self.user,
             password=self.password,
             port=self.sshport,
-            timeout=timeout)
+            timeout=timeout,
+        )
         if shell:
             self.channel = self.ssh.invoke_shell()
         if scp:
@@ -76,7 +79,7 @@ class SshShell(object):
     def read(self):
         sumstring = ""
         while True:
-            string = self.read_nbytes(1024).decode('utf-8')
+            string = self.read_nbytes(1024).decode("utf-8")
             sumstring += string
             if not string:
                 break
@@ -89,7 +92,7 @@ class SshShell(object):
         return self.read()
 
     def ask(self, question=""):
-        return self.askraw(question + '\n')
+        return self.askraw(question + "\n")
 
     def __del__(self):
         self.ssh.close()
@@ -111,19 +114,19 @@ class SshShell(object):
         self.ask()  # empty the shell before asking something
         macs = list()
         nextgood = False
-        for token in self.ask('ifconfig | grep HWaddr').split():
-            if nextgood and len(token.split(':'))==6:
+        for token in self.ask("ifconfig | grep HWaddr").split():
+            if nextgood and len(token.split(":")) == 6:
                 macs.append(token)
-            if token == 'HWaddr':
+            if token == "HWaddr":
                 nextgood = True
             else:
                 nextgood = False
         if macs == []:  # problem on more recent stemlab125_14 os
             nextgood = False
-            for token in self.ask('ip address').split():
-                if nextgood and len(token.split(':'))==6:
+            for token in self.ask("ip address").split():
+                if nextgood and len(token.split(":")) == 6:
                     macs.append(token)
-                if token == 'link/ether':
+                if token == "link/ether":
                     nextgood = True
                 else:
                     nextgood = False

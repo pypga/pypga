@@ -145,3 +145,8 @@ class TestMigenPulseBurstGenContinuous(TestMigenPulseBurstGenIntPulses):
             yield 0
         while True:
             yield 1
+
+
+@pytest.mark.skip(reason="period of zero is not yet supported")
+class TestMigenPulseBurstGenIntPulsesFast(TestMigenPulseBurstGenIntPulses):
+    period = 0  # actual period is two clock cycles more than the setting

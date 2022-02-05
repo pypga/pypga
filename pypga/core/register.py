@@ -1,7 +1,8 @@
-import logging
 import functools
-from migen import Memory, If, Signal
-from misoc.interconnect.csr import CSRStorage, CSRStatus
+import logging
+
+from migen import If, Memory, Signal
+from misoc.interconnect.csr import CSRStatus, CSRStorage
 
 from .common import CustomizableMixin
 
@@ -9,16 +10,19 @@ logger = logging.getLogger(__name__)
 
 
 class _Register(CustomizableMixin):
-
     def _add_migen_commands(self, name, module):
         name_csr = f"{name}_csr"
         if self.depth == 1:
             if self.readonly:
-                csr_instance = CSRStatus(size=self.width, reset=self.default, name=name_csr)
+                csr_instance = CSRStatus(
+                    size=self.width, reset=self.default, name=name_csr
+                )
                 setattr(module, name_csr, csr_instance)
                 setattr(module, name, csr_instance.status)
             else:
-                csr_instance = CSRStorage(size=self.width, reset=self.default, name=name_csr)
+                csr_instance = CSRStorage(
+                    size=self.width, reset=self.default, name=name_csr
+                )
                 setattr(module, name_csr, csr_instance)
                 setattr(module, name, csr_instance.storage)
                 setattr(module, f"{name}_re", csr_instance.re)
@@ -26,22 +30,32 @@ class _Register(CustomizableMixin):
             if self.default is None:
                 initial_data = [0] * self.depth
             else:
-                initial_data = [self.from_python(self.before_from_python(v)) for v in self.default]
+                initial_data = [
+                    self.from_python(self.before_from_python(v)) for v in self.default
+                ]
+            if self.reverse:
+                initial_data = reversed(initial_data)
             memory = Memory(width=self.width, depth=self.depth, init=initial_data)
             setattr(module.specials, f"{name}_memory", memory)
-            ps_port = memory.get_port(write_capable=not self.readonly, we_granularity=False)
+            ps_port = memory.get_port(
+                write_capable=not self.readonly, we_granularity=False
+            )
             setattr(module.specials, f"{name}_memory_ps_port", ps_port)
             # add a port for the PL to write to the memory, otherwise having a this memory would be pointless
             pl_port = memory.get_port(write_capable=self.readonly, we_granularity=False)
             setattr(module.specials, f"{name}_memory_pl_port", pl_port)
             # one extra bit of width for controlling the index of the memory (LSB high = modify index)
-            csr_instance = CSRStorage(size=self.width+1, reset=0, name=name_csr, write_from_dev=True)
+            csr_instance = CSRStorage(
+                size=self.width + 1, reset=0, name=name_csr, write_from_dev=True
+            )
             setattr(module, name_csr, csr_instance)
             # PS writing the value ``(index << 1) + 1`` to the register triggers updates the index of the memory
             update_index = Signal()
             module.comb += update_index.eq(csr_instance.re & csr_instance.storage[0])
             # update index as requested by the PS (LSB is control bit, so ignored for the address)
-            module.sync += If(update_index == 1, ps_port.adr.eq(csr_instance.storage[1:]))
+            module.sync += If(
+                update_index == 1, ps_port.adr.eq(csr_instance.storage[1:])
+            )
             # PL writes the data at the new index to the register so it can be read by the PS, with ``delay`` cycles delay
             delay = 2
             we_pipeline = Signal(delay)
@@ -57,7 +71,9 @@ class _Register(CustomizableMixin):
             else:
                 # write to the memory when new values are sent by the PS, indicated by LSB being low
                 update_value = Signal()
-                module.comb += update_value.eq(csr_instance.re & ~csr_instance.storage[0])
+                module.comb += update_value.eq(
+                    csr_instance.re & ~csr_instance.storage[0]
+                )
                 # the index has already been set by the PS at this point, so we only have to update the memory
                 module.sync += ps_port.dat_w.eq(csr_instance.storage[1:])
                 module.sync += ps_port.we.eq(update_value)
@@ -71,6 +87,7 @@ class _Register(CustomizableMixin):
     readonly: bool = False
     offset_from_python: int = 0  # fpga value = Python value + offset_from_python
     depth: int = 1
+    reverse: bool = False  # set True to invert the order of Python arrays.
     doc: str = ""
 
     _SEP = "_"
@@ -94,7 +111,7 @@ class _Register(CustomizableMixin):
             value = 0
             logger.warning(f"Negative saturation of register {self.name}")
         elif value >= (1 << self.width):
-            value = (1 << self.width)
+            value = 1 << self.width
             logger.warning(f"Positive saturation of register {self.name}")
         return value
 
@@ -109,16 +126,24 @@ class _Register(CustomizableMixin):
             value = instance._interface.read(self._get_full_name(instance))
             return self.to_python(value)
         else:
-            value = instance._interface.read_array(self._get_full_name(instance), length=self.depth)
+            value = instance._interface.read_array(
+                self._get_full_name(instance), length=self.depth
+            )
+            if self.reverse:
+                value = reversed(value)
             return [self.to_python(v) for v in value]
 
     def __set__(self, instance, value):
         if self.readonly:
-            raise ValueError(f"The register {self.instance.name}.{self.name} is read-only.")
+            raise ValueError(
+                f"The register {self.instance.name}.{self.name} is read-only."
+            )
         if self.depth == 1:
             value = self.from_python(self.before_from_python(value))
             instance._interface.write(self._get_full_name(instance), value)
         else:
+            if self.reverse:
+                value = reversed(value)
             value = [self.from_python(self.before_from_python(v)) for v in value]
             instance._interface.write_array(self._get_full_name(instance), value)
 
@@ -144,17 +169,22 @@ class _BoolRegister(_Register):
 
 class _TriggerRegister(_Register):
     """A register that returns a function which can be used to send a software trigger."""
+
     width = 1
     default = 0
     readonly = False
     offset_from_python = 0
 
     def __get__(self, instance, owner=None):
-        send_trigger = functools.partial(instance._interface.write, self._get_full_name(instance), 0)
+        send_trigger = functools.partial(
+            instance._interface.write, self._get_full_name(instance), 0
+        )
         return send_trigger
 
     def __set__(self, instance, value):
-        raise AttributeError("Trigger register cannot be set")
+        raise AttributeError(
+            "Trigger register cannot be set - try calling instead to generate a soft trigger."
+        )
 
     def _add_migen_commands(self, name, module):
         name_csr = f"{name}_csr"
@@ -185,7 +215,7 @@ class _NumberRegister(_Register):
     def to_python(self, value):
         value = _Register.to_python(self, value)
         if self.signed and value >= (1 << (self.width - 1)):
-            value -= (1 << self.width)
+            value -= 1 << self.width
         return int(value)
 
     def before_from_python(self, value):
@@ -206,7 +236,7 @@ class _NumberRegister(_Register):
             value = self._int_max
             logger.warning(f"Positive saturation for {self.name}")
         if self.signed and value < 0:
-            value += (1 << self.width)
+            value += 1 << self.width
         value = _Register.from_python(self, value)
         return value
 

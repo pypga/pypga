@@ -1,5 +1,6 @@
 from migen import Memory, Signal
-from pypga.core import Module, logic, Register, MigenModule
+
+from pypga.core import MigenModule, Module, Register, logic
 
 
 class MigenRam(MigenModule):
@@ -28,7 +29,9 @@ class MigenRam(MigenModule):
         self.value = Signal(width, reset=0)
         ###
         self.specials.memory = Memory(width=width, depth=depth, init=data)
-        self.specials.port = self.memory.get_port(write_capable=not readonly, we_granularity=False)
+        self.specials.port = self.memory.get_port(
+            write_capable=not readonly, we_granularity=False
+        )
         self.comb += [
             self.port.adr.eq(index),
             self.value.eq(self.port.dat_r),

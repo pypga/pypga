@@ -1,51 +1,40 @@
 from typing import Union
 
-from pypga.core import If, MigenModule, Signal
-
 from migen import Cat, Constant
 
-
-def _get_length(signal):
-    try:
-        return len(signal)
-    except TypeError:
-        return signal.bit_length()
-
-
-def _get_reset_value(signal: Union[Signal, Constant, int]) -> int:
-    """Returns the reset value of a signal or constant."""
-    try:
-        return int(signal.reset.value)
-    except AttributeError:
-        try:
-            return int(signal.value)
-        except AttributeError:
-            return int(signal)
+from pypga.core import If, MigenModule, Signal
+from pypga.core.common import get_length, get_reset_value
 
 
 class MigenPulseGen(MigenModule):
-    def __init__(self, period: Union[Signal, int] = 0, on: Union[Signal, bool] = True, high_after_on: bool = True, first_cycle_period_offset: int = 0):
+    def __init__(
+        self,
+        period: Union[Signal, int] = 0,
+        on: Union[Signal, bool] = True,
+        high_after_on: bool = True,
+        first_cycle_period_offset: int = 0,
+    ):
         """
-        Pulse generator that emits a pulse every ``period + 2`` clock cycles. 
+        Pulse generator that emits a pulse every ``period + 2`` clock cycles.
 
         Args:
             period: one less than the period of low clock cycles between pulses.
-              Set this to a negative number to indicate that the output should 
-              be constantly high. Set this to zero for a pulse every other clock 
+              Set this to a negative number to indicate that the output should
+              be constantly high. Set this to zero for a pulse every other clock
               cycle, to one for a pulse every third clock cycle, and so on.
             on: enables the pulse generator sequence when high.
-            high_after_on: when True, the output goes high for a single 
-              clock cycle when ``on`` goes high, otherwise it only goes high 
+            high_after_on: when True, the output goes high for a single
+              clock cycle when ``on`` goes high, otherwise it only goes high
               after the first period.
-        
+
         Output signals:
-            out: the pulse sequence, 0 between pulses and 1 for a single clock 
+            out: the pulse sequence, 0 between pulses and 1 for a single clock
               cycle during a pulse.
         """
         self.out = Signal(reset=0)
         ###
-        width = _get_length(period)
-        period_reset = _get_reset_value(period)
+        width = get_length(period)
+        period_reset = get_reset_value(period)
         if period_reset < 0:
             raise ValueError("period must be at least 0.")
         period_reset -= first_cycle_period_offset
@@ -58,47 +47,56 @@ class MigenPulseGen(MigenModule):
                 on == 0,  # prepare for the first pulse when off
                 self.carry.eq(high_after_on),
                 self.count.eq(period - first_cycle_period_offset),
-            ).Elif(
+            )
+            .Elif(
                 self.carry,  # restart countdown
                 self.carry.eq(0),
                 self.count.eq(period),
-            ).Else(  # regular countdown
-                Cat(self.count, self.carry).eq(Cat(self.count, 0) - 1),
             )
+            .Else(  # regular countdown
+                Cat(self.count, self.carry).eq(Cat(self.count, 0) - 1),
+            ),
         ]
 
 
 class MigenPulseBurstGen(MigenModule):
-    def __init__(self, trigger: Signal, reset: Union[Signal, bool] = False, pulses: Union[Signal, int] = 0, period: Union[Signal, int] = 0):
+    def __init__(
+        self,
+        trigger: Signal,
+        reset: Union[Signal, bool] = False,
+        pulses: Union[Signal, int] = 0,
+        period: Union[Signal, int] = 0,
+    ):
         """
-        Pulse generator that a fixed number of pulses every ``period + 2`` clock cycles. 
+        Pulse generator that a fixed number of pulses every ``period + 2`` clock cycles.
 
         Args:
             trigger: high triggers a new pulse sequence if the generator is idle.
             reset: sets status to idle and count to zero when high.
-            pulses: the number of pulses per burst seqeuence is ``pulses + 1``.           
+            pulses: the number of pulses per burst seqeuence is ``pulses + 1``.
             period: one less than the period of low clock cycles between pulses.
-              Set this to a negative number to indicate that the output should 
-              be constantly high. Set this to zero for a pulse every other clock 
+              Set this to a negative number to indicate that the output should
+              be constantly high. Set this to zero for a pulse every other clock
               cycle, to one for a pulse every third clock cycle, and so on.
-        
+
         Output signals:
-            out: the pulse sequence, 0 between pulses and 1 for a single clock 
+            out: the pulse sequence, 0 between pulses and 1 for a single clock
               cycle during a pulse.
-            count: the current count, going from ``pulses`` to zero during a 
+            count: the current count, going from ``pulses`` to zero during a
               burst sequence and staying zero afterwards.
         """
         self.out = Signal(reset=0)
         self.count = Signal(reset=0)
         self.busy = Signal(reset=False)
         ###
-        try:
-            _count_width = len(pulses)
-        except TypeError:
-            _count_width = pulses.bit_length()
-        self.count = Signal(_count_width, reset=0)
+        self.count = Signal(get_length(pulses), reset=0)
         pulsegen_on = Signal(reset=0)
-        self.submodules.pulsegen = MigenPulseGen(period=period, on=pulsegen_on, high_after_on=False, first_cycle_period_offset=1)
+        self.submodules.pulsegen = MigenPulseGen(
+            period=period,
+            on=pulsegen_on,
+            high_after_on=False,
+            first_cycle_period_offset=1,
+        )
         self.sync += [
             self.out.eq(0),
             pulsegen_on.eq(~reset & (self.busy | trigger)),
@@ -108,31 +106,28 @@ class MigenPulseBurstGen(MigenModule):
                 self.busy.eq(0),
                 self.count.eq(0),
                 pulsegen_on.eq(0),
-            ).Elif(
+            )
+            .Elif(
                 self.busy == 0,
                 If(
-                    trigger == 1, 
+                    trigger == 1,
                     self.busy.eq(1),
                     self.out.eq(1),
                     self.count.eq(pulses),
                 ),
-            ).Else(
+            )
+            .Else(
                 If(
                     self.pulsegen.out == 1,
                     If(
                         self.count == 0,
-                        If(
-                            trigger == 1,
-                            self.out.eq(1),
-                            self.count.eq(pulses),
-                        ).Else(
+                        If(trigger == 1, self.out.eq(1), self.count.eq(pulses),).Else(
                             self.busy.eq(0),
-                        )
+                        ),
                     ).Else(
                         self.out.eq(1),
                         self.count.eq(self.count - 1),
-                    )
+                    ),
                 )
-            )
+            ),
         ]
-

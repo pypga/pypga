@@ -1,5 +1,6 @@
 from migen import Signal
-from pypga.core import TopModule, Module, logic, Register
+
+from pypga.core import Module, Register, TopModule, logic
 
 
 # a Module is the basic building block in PyPGA. Often it is useful

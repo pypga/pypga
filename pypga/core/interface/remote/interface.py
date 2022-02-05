@@ -1,7 +1,8 @@
+from typing import List, Union
+
 from ..interface import BaseInterface
 from .client import Client
 from .server import Server
-from typing import List, Union
 
 
 class RemoteInterface(BaseInterface):
@@ -31,4 +32,3 @@ class RemoteInterface(BaseInterface):
     def stop(self):
         self.client.stop()
         self.server.stop()
-        

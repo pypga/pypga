@@ -1,9 +1,10 @@
 import logging
-import numpy as np
-import threading
-from time import time
 import socket
+import threading
 import uuid
+from time import time
+
+import numpy as np
 
 
 class Client:
@@ -23,24 +24,26 @@ class Client:
 
     def start(self):
         self._socket.connect((self._host, self._port))
-        self._socket.sendall(str(self._token).encode('ascii'))
+        self._socket.sendall(str(self._token).encode("ascii"))
         # receive a confirmation token
         data = self._socket.recv(32)
-        while (len(data) < 32):
+        while len(data) < 32:
             new = self._socket.recv(32 - len(data))
             data += new
             if len(new) == 0:
                 break
         data = data.decode("ascii")
-        if data != '1'*32:
-            raise RuntimeError(f"Wrong authentication token: {self._token} != {data}. This may mean "
-                               f"that another client has connected to your redpitaya. Try restarting.")
+        if data != "1" * 32:
+            raise RuntimeError(
+                f"Wrong authentication token: {self._token} != {data}. This may mean "
+                f"that another client has connected to your redpitaya. Try restarting."
+            )
         else:
             logging.debug(f"Correct authentication token: {self._token} / {data}")
 
     def stop(self):
         try:
-            self._socket.send(b"c" + b"\x00"*7)
+            self._socket.send(b"c" + b"\x00" * 7)
             self._socket.close()
         except socket.error:
             logging.debug("Error upon closing socket: ", exc_info=True)
@@ -49,9 +52,19 @@ class Client:
         if length > 65535:
             length = 65535
             logging.warning("Maximum read-length is %d", length)
-        header = b'r' + bytes(bytearray([0,
-                                         length & 0xFF, (length >> 8) & 0xFF,
-                                         addr & 0xFF, (addr >> 8) & 0xFF, (addr >> 16) & 0xFF, (addr >> 24) & 0xFF]))
+        header = b"r" + bytes(
+            bytearray(
+                [
+                    0,
+                    length & 0xFF,
+                    (length >> 8) & 0xFF,
+                    addr & 0xFF,
+                    (addr >> 8) & 0xFF,
+                    (addr >> 16) & 0xFF,
+                    (addr >> 24) & 0xFF,
+                ]
+            )
+        )
         with self._socket_lock:
             self._socket.sendall(header)
             timeout_time = time() + self._timeout
@@ -63,20 +76,28 @@ class Client:
                     try:
                         self._clear_socket()
                     finally:
-                        raise TimeoutError(f"Read timeout - incomplete data transmission: {data}")
+                        raise TimeoutError(
+                            f"Read timeout - incomplete data transmission: {data}"
+                        )
             self._check_acknowledgement(header, ack=data[:8])
         return np.frombuffer(data[8:], dtype=np.uint32)
 
     def writes(self, addr, values):
-        values = values[:65535 - 2]
+        values = values[: 65535 - 2]
         length = len(values)
-        header = b'w' + bytes(bytearray([0,
-                                         length & 0xFF,
-                                         (length >> 8) & 0xFF,
-                                         addr & 0xFF,
-                                         (addr >> 8) & 0xFF,
-                                         (addr >> 16) & 0xFF,
-                                         (addr >> 24) & 0xFF]))
+        header = b"w" + bytes(
+            bytearray(
+                [
+                    0,
+                    length & 0xFF,
+                    (length >> 8) & 0xFF,
+                    addr & 0xFF,
+                    (addr >> 8) & 0xFF,
+                    (addr >> 16) & 0xFF,
+                    (addr >> 24) & 0xFF,
+                ]
+            )
+        )
         with self._socket_lock:
             # send header+body
             self._socket.sendall(header + np.array(values, dtype=np.uint32).tobytes())
