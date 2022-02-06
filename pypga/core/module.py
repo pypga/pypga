@@ -142,6 +142,11 @@ class Module:
         # TODO: generalize to multiple boards
         return 1 / self._clock_period
 
+    @property
+    def _ram_start(self):
+        # TODO: generalize to multiple boards
+        return 0xa000000
+
 
 DEFAULT_BOARD = "stemlab125_14"
 

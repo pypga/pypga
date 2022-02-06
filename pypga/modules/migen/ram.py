@@ -1,16 +1,10 @@
 from migen import Memory, Signal
 
 from pypga.core import MigenModule, Module, Register, logic
+from pypga.core.common import get_width_and_depth
 
 
 class MigenRam(MigenModule):
-    @staticmethod
-    def _get_width_and_depth(data, width=None):
-        if width is None:
-            assert min(data) >= 0
-            width = max(data).bit_length()
-        return width, len(data)
-
     def __init__(self, index, data: list, width: int = None, readonly=False):
         """
         A memory module.
@@ -25,7 +19,7 @@ class MigenRam(MigenModule):
         Output signals:
             value: a signal with the ROM value at index.
         """
-        width, depth = self._get_width_and_depth(data, width)
+        width, depth = get_width_and_depth(data, width)
         self.value = Signal(width, reset=0)
         ###
         self.specials.memory = Memory(width=width, depth=depth, init=data)

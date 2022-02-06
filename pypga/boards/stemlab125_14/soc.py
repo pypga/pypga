@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class StemlabSoc(SoCCore):
-    def __init__(self, platform, top):
+    def __init__(self, platform):
         logger.debug("Creating Stemlab SoC.")
         super().__init__(platform=platform, csr_data_width=32, ident="Soc")
         platform.add_platform_command(
@@ -29,5 +29,10 @@ class StemlabSoc(SoCCore):
         #     Instance("ODDR", o_Q=adc_pads.clk[1], i_D1=0, i_D2=1, i_CE=1, i_C=self.cd_adc.clk),
         # ]
         # self.comb += adc_pads.cdcs.eq(1)
+    
+    def _attach_top(self, top):
         self.submodules.top = top
         self.csr_devices.append("top")
+        # TODO: do a better job here, e.g. create "top" after having instantiated the SOC
+        if hasattr(top, "_connect_to_soc"):
+            top._connect_to_soc(self)

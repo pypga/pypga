@@ -68,6 +68,11 @@ void error(const char *msg);
 
 #define DEBUG_MONITOR 0
 
+// dedicated ram area for fast data written by FPGA
+#define RAM_START 0xa000000UL
+#define RAM_SIZE  0x2000000UL
+#define RAM_MASK  (RAM_SIZE - 1)
+
 unsigned long read_value(unsigned long a_addr);
 unsigned long* read_values(unsigned long a_addr, unsigned long* a_values_buffer, unsigned long a_len);
 void write_value(unsigned long a_addr, unsigned long a_value);
@@ -89,16 +94,6 @@ void open_map_base() {
 	if(map_base == (void *) -1) FATAL;
 }
 
-void close_map_base() {
-	/*if (map_base != (void*)(-1)) {
-		if(munmap(map_base, MAP_SIZE) == -1) FATAL;
-		map_base = (void*)(-1);
-	}
-	if (fd != -1) {
-		close(fd);
-	}
-	*/;
-}
 /*
 //basic read and write operations
 unsigned long* read_values(unsigned long a_addr, unsigned long* a_values_buffer, unsigned long a_len) {
@@ -127,8 +122,6 @@ void error(const char *msg)
     perror(msg);
     close(newsockfd); 
     close(sockfd);
-	//clean up the memory mapping
-	close_map_base();
     exit(-1);
 }
 
@@ -178,6 +171,15 @@ int main(int argc, char *argv[])
               error("ERROR on binding");
      listen(sockfd,5);
      clilen = sizeof(cli_addr);
+
+     // initialize RAM access
+     int ram_fd = -1;
+     if((ram_fd = open("/dev/mem", O_RDWR | O_SYNC)) == -1) FATAL;
+     ///////////////////////////////////
+     void* ram_base = (void*)(-1);
+     ram_base = mmap(0, RAM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, ram_fd, RAM_START & ~RAM_MASK);
+     if(ram_base == (void *) -1) FATAL;	
+ 	 // end initialize RAM access
 
      //server service loop
      for (;;)
@@ -237,8 +239,9 @@ int main(int argc, char *argv[])
                  data_length = buffer[2]+(buffer[3]<<8); //number of "unsigned long" to be read/written
                  if (data_length > MAX_LENGTH)
                      data_length = MAX_LENGTH;
-                 if (data_length == 0)
-                    continue;
+                 //if (data_length == 0)
+                 //   continue;
+                 
                  //test for various cases Read, Write, Close
                  else if (buffer[0] == 'r') { //read from FPGA
                     read_values(address, rw_buffer, data_length);
@@ -246,6 +249,21 @@ int main(int argc, char *argv[])
                     n = send(newsockfd,(void*)data_buffer,data_length*sizeof(unsigned long)+8,0);
                     if (n < 0) error("ERROR writing to socket");
                     if (n != data_length*sizeof(unsigned long)+8) error("ERROR wrote incorrect number of bytes to socket");
+                 }
+                 else if (buffer[0] == 'd') { //read from RAM
+                    //fprintf(stderr, "Reading from RAM!\n");
+                    //send the data
+                    unsigned long points = buffer[1]+ (buffer[2]<<8) + (buffer[3]<<16); //number of "unsigned long" to be read/written
+                    n = send(newsockfd,(void*)data_buffer,8,0);
+                    if (n < 0) error("ERROR writing to socket");
+                    if (n != 8) error("ERROR wrote incorrect number of header bytes to socket");
+                    if (points > 0) {
+                        void* ram_addr = ram_base + (address & RAM_MASK);
+                        n = send(newsockfd, ram_addr, points*sizeof(unsigned long), 0);
+                        if (n < 0) error("ERROR writing to socket");
+                        if (n != points*sizeof(unsigned long)) error("ERROR wrote incorrect number of data bytes to socket");
+                    }
+                    //fprintf(stderr, "Reading from RAM was a success!\n");
                  }
                  else if  (buffer[0] == 'w') { //write to FPGA
                     //read new data from socket
@@ -263,8 +281,15 @@ int main(int argc, char *argv[])
              //close the socket
              close(newsockfd);
              close(sockfd);
-             //clean up the memory mapping
-             close_map_base();
+             
+             // de-initialize RAM access
+             if (ram_base != (void*)(-1)) {
+                 if(munmap(ram_base, RAM_SIZE) == -1) FATAL;
+                 ram_base = (void*)(-1);
+             }
+             if (ram_fd != -1) close(fd);
+             // end de-initialize RAM access
+             
              return 0;
          }
      }

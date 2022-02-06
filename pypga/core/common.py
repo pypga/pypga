@@ -1,5 +1,5 @@
 import shutil
-from typing import Union
+from typing import Union, Tuple, List
 
 from migen import Constant, Signal
 
@@ -42,3 +42,10 @@ def get_reset_value(signal: Union[Signal, Constant, int]) -> int:
             return int(signal.value)
         except AttributeError:
             return int(signal)
+
+def get_width_and_depth(data: List[int], width: int = None) -> Tuple[int, int]:
+    """Returns the width and depth required to store data."""
+    if width is None:
+        assert min(data) >= 0
+        width = max(data).bit_length()
+    return width, len(data)

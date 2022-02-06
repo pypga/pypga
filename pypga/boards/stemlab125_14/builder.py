@@ -30,7 +30,8 @@ class Builder(BaseBuilder):
             f.write(cpu_interface.get_csr_csv(self.soc.get_csr_regions()))
 
     def _build(self):
-        self.soc = StemlabSoc(platform=self._platform, top=self.top)
+        self.soc = StemlabSoc(platform=self._platform)
+        self.soc._attach_top(self.top)
         logger.debug("Running vivado build...")
         self.soc.build(build_dir=self.build_path)
         self._export_register_addresses()
