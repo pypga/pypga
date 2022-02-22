@@ -42,12 +42,6 @@ class AutoMigenModule(MigenModule, AutoCSR):
         # finally add all the custom logic
         for name, logic_function in logic_functions.items():
             self._add_logic_function(logic_function, name, platform=platform, soc=soc)
-        # TODO: do a better job here, e.g. create "top" after having instantiated the SOC
-        if hasattr(module_class, "_connect_to_soc"):
-            self._connect_to_soc = module_class._connect_to_soc
-            print("conncet_to_soc found")
-        else:
-            print("no conncet_to_soc found")
         logger.debug(f"Finished migen module for module class {module_class.__name__}.")
 
     def _add_submodule(self, submodule, name, platform, soc):

@@ -35,11 +35,6 @@ class StemlabSoc(SoCCore):
     def _attach_top(self, top):
         self.submodules.top = top
         self.csr_devices.append("top")
-        # TODO: do a better job here, e.g. create "top" after having instantiated the SOC
-        if hasattr(top, "_connect_to_soc"):
-            top._connect_to_soc(top, self)
-        else:
-            print("no connect")
 
     def _hash(self):
         """
