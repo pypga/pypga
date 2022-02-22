@@ -35,4 +35,6 @@ class StemlabSoc(SoCCore):
         self.csr_devices.append("top")
         # TODO: do a better job here, e.g. create "top" after having instantiated the SOC
         if hasattr(top, "_connect_to_soc"):
-            top._connect_to_soc(self)
+            top._connect_to_soc(top, self)
+        else:
+            print("no connect")

@@ -159,11 +159,11 @@ class TopModule(Module):
 
     @classmethod
     @functools.wraps(RemoteInterface)
-    def run(cls, *args, host=None, board=DEFAULT_BOARD, autobuild=True, **kwargs):
+    def run(cls, *args, host=None, board=DEFAULT_BOARD, autobuild=True, forcebuild=False, **kwargs):
         """Runs the design on a board and returns an interfaced instance."""
         builder = get_builder(board=board, module_class=cls)
-        if not builder.result_exists:
-            if autobuild:
+        if forcebuild or not builder.result_exists:
+            if autobuild or forcebuild:
                 builder.build()
             else:
                 raise ValueError(
