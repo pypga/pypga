@@ -3,8 +3,9 @@ import logging
 from migen_axi.platforms import redpitaya
 from misoc.integration import cpu_interface
 
-from ...core.builder import BaseBuilder
-from .soc import StemlabSoc
+from pypga.boards.stemlab125_14.soc import StemlabSoc
+from pypga.core.builder import BaseBuilder
+from pypga.core.migen import AutoMigenModule
 
 logger = logging.getLogger(__name__)
 
@@ -25,12 +26,32 @@ class Builder(BaseBuilder):
             ]
         )
 
+    def _create_soc(self):
+        logger.debug("Creating SoC")
+        self.soc = StemlabSoc(platform=self._platform)
+
     def _export_register_addresses(self):
         with (self.build_path / "csr.csv").open("w") as f:
             f.write(cpu_interface.get_csr_csv(self.soc.get_csr_regions()))
 
+    def _get_hash(self):
+        """Returns a hash for the design, without building the actual design or requiring a build folder."""
+        self._create_platform()
+        self._create_soc()
+        self.top = AutoMigenModule(
+            self.module_class, platform=self._platform, soc=self.soc
+        )
+        self.soc._attach_top(self.top)
+        # TODO: include SOC in hash, for example by running `soc.build(run=False) and hashing build path`
+        return self.top._hash()
+
     def _build(self):
-        self.soc = StemlabSoc(platform=self._platform)
+        """The actual steps required for building this design."""
+        self._create_platform()
+        self._create_soc()
+        self.top = AutoMigenModule(
+            self.module_class, platform=self._platform, soc=self.soc
+        )
         self.soc._attach_top(self.top)
         logger.debug("Running vivado build...")
         self.soc.build(build_dir=self.build_path)

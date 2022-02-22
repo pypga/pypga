@@ -22,7 +22,7 @@ class AutoMigenModule(MigenModule, AutoCSR):
 
     """
 
-    def __init__(self, module_class, platform: GenericPlatform):
+    def __init__(self, module_class, platform: GenericPlatform, soc: typing.Any):
         logger.debug(f"Creating migen module for module class {module_class.__name__}.")
         registers = module_class._pypga_registers
         logic_functions = module_class._pypga_logic
@@ -38,10 +38,10 @@ class AutoMigenModule(MigenModule, AutoCSR):
             self._add_register(register, name)
         # then create the submodules to be able to access them from the logic at this level
         for name, submodule in submodules.items():
-            self._add_submodule(submodule, name, platform)
+            self._add_submodule(submodule, name, platform, soc)
         # finally add all the custom logic
         for name, logic_function in logic_functions.items():
-            self._add_logic_function(logic_function, name, platform)
+            self._add_logic_function(logic_function, name, platform=platform, soc=soc)
         # TODO: do a better job here, e.g. create "top" after having instantiated the SOC
         if hasattr(module_class, "_connect_to_soc"):
             self._connect_to_soc = module_class._connect_to_soc
@@ -50,9 +50,9 @@ class AutoMigenModule(MigenModule, AutoCSR):
             print("no conncet_to_soc found")
         logger.debug(f"Finished migen module for module class {module_class.__name__}.")
 
-    def _add_submodule(self, submodule, name, platform):
+    def _add_submodule(self, submodule, name, platform, soc):
         logger.debug(f"Creating submodule {name} of type {submodule.__name__}.")
-        migen_submodule = AutoMigenModule(submodule, platform)
+        migen_submodule = AutoMigenModule(submodule, platform, soc)
         setattr(self.submodules, name, migen_submodule)
         # TODO: remove the next line, it seems to be redundant as migen automatically does this
         setattr(
@@ -67,12 +67,15 @@ class AutoMigenModule(MigenModule, AutoCSR):
         logger.debug(f"Creating register {name} of type {register.__class__.__name__}.")
         register._add_migen_commands(name=name, module=self)
 
-    def _add_logic_function(self, logic_function, name, platform):
+    def _add_logic_function(self, logic_function, name, platform, soc):
         logger.debug(f"Implementing logic from function {name}.")
         try:
-            return_value = logic_function(self, platform=platform)
+            return_value = logic_function(self, platform=platform, soc=soc)
         except TypeError:
-            return_value = logic_function(self)
+            try:
+                return_value = logic_function(self, platform=platform)
+            except TypeError:
+                return_value = logic_function(self)
         if return_value is not None:
             setattr(self, logic_function.__name__, return_value)
 

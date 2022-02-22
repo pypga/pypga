@@ -1,7 +1,9 @@
+import hashlib
 import logging
 
 # only required for ADC clock PLL
 import migen
+from migen.fhdl.verilog import convert
 from migen_axi.integration.soc_core import SoCCore
 
 # from migen.build.generic_platform import *
@@ -38,3 +40,17 @@ class StemlabSoc(SoCCore):
             top._connect_to_soc(top, self)
         else:
             print("no connect")
+
+    def _hash(self):
+        """
+        Returns a hash to unambiguously identify a design.
+
+        This is used to decide whether a design has been build or still needs to be.
+        """
+        verilog = convert(self)
+        hash_ = hashlib.sha256()
+        hash_.update(verilog.main_source.encode())
+        for filename, content in verilog.data_files.items():
+            hash_.update(filename.encode())
+            hash_.update(content.encode())
+        return hash_.hexdigest()

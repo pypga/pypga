@@ -57,11 +57,7 @@ class BaseBuilder(ABC):
 
     def __init__(self, module_class):
         self.module_class = module_class
-        self._create_platform()
-        self.top = AutoMigenModule(self.module_class, platform=self._platform)
-        self.hash = self.top._hash()
-        self._create_platform()
-        self.top = AutoMigenModule(self.module_class, platform=self._platform)
+        self.hash = self._get_hash()
         self.result_path = self._get_result_path()
         self.build_path = self._get_build_path()
 
@@ -69,9 +65,14 @@ class BaseBuilder(ABC):
         empty_path(self.build_path)
         self._build()
 
+    # board-specific methods
+
     @abstractmethod
-    def _build(self):
+    def _get_hash(self):
+        """Returns a hash for the design, without building the actual design or requiring a build folder."""
         pass
 
-    def _create_platform(self):
-        self._platform = None
+    @abstractmethod
+    def _build(self):
+        """The actual steps required for building this design."""
+        pass
