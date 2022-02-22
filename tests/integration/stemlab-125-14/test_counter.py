@@ -1,8 +1,10 @@
-from pypga.modules.counter import Counter
-from pypga.core import TopModule
-import pytest
-import time
 import math
+import time
+
+import pytest
+
+from pypga.core import TopModule
+from pypga.modules.counter import Counter
 
 
 class MyExampleCounter(TopModule):

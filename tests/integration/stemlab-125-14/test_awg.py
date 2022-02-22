@@ -1,6 +1,7 @@
-from pypga.modules.awg import Awg
-from pypga.core import TopModule
 import pytest
+
+from pypga.core import TopModule
+from pypga.modules.awg import Awg
 
 
 class MyExampleAwg(TopModule):

@@ -1,9 +1,9 @@
 import pytest
-from pypga.core import MigenModule
-from pypga.modules.migen.pulsegen import MigenPulseBurstGen, MigenPulseGen
-
 from migen import Constant, Signal, run_simulation
 from migen.fhdl import verilog
+
+from pypga.core import MigenModule
+from pypga.modules.migen.pulsegen import MigenPulseBurstGen, MigenPulseGen
 
 
 class TestMigenPulseGenIntPeriod:

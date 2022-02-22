@@ -1,5 +1,7 @@
 from typing import List, Union
+
 import numpy as np
+
 from ..interface import BaseInterface
 from .client import Client
 from .server import Server

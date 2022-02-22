@@ -1,15 +1,12 @@
-from migen import Memory, Signal
-
-from pypga.core import MigenModule, Module, Register, logic
-
-
 from migen import *
-from migen.genlib.fsm import FSM
-from migen.genlib.fifo import AsyncFIFOBuffered
+from migen import Memory, Signal
 from migen.genlib.cdc import MultiReg, PulseSynchronizer
+from migen.genlib.fifo import AsyncFIFOBuffered
+from migen.genlib.fsm import FSM
 from migen_axi.interconnect import axi
 from misoc.interconnect.csr import *
 
+from pypga.core import MigenModule, Module, Register, logic
 
 AXI_ADDRESS_WIDTH = 32
 AXI_DATA_WIDTH = 64

@@ -1,3 +1,5 @@
+import numpy as np
+
 from pypga.core import (
     BoolRegister,
     FixedPointRegister,
@@ -10,9 +12,8 @@ from pypga.core import (
     logic,
 )
 from pypga.core.register import TriggerRegister
-from pypga.modules.migen.pulsegen import MigenPulseBurstGen
 from pypga.modules.migen.axiramwriter import MigenAxiRamWriter
-import numpy as np
+from pypga.modules.migen.pulsegen import MigenPulseBurstGen
 
 
 def DAQ(

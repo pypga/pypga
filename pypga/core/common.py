@@ -1,5 +1,5 @@
 import shutil
-from typing import Union, Tuple, List
+from typing import List, Tuple, Union
 
 from migen import Constant, Signal
 

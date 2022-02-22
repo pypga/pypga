@@ -2,13 +2,12 @@ import hashlib
 import logging
 import typing
 
-from misoc.interconnect.csr import AutoCSR, CSRStatus, CSRStorage
-
 from migen import If
 from migen import Module as MigenModule
 from migen import Signal
 from migen.build.generic_platform import GenericPlatform
 from migen.fhdl.verilog import convert
+from misoc.interconnect.csr import AutoCSR, CSRStatus, CSRStorage
 
 from .register import _Register
 

@@ -1,9 +1,11 @@
-from pypga.core.logic_function import logic
-from pypga.core import TopModule, Register
-import pytest
-import time
 import math
+import time
+
 import numpy as np
+import pytest
+
+from pypga.core import Register, TopModule
+from pypga.core.logic_function import logic
 
 
 def ReadwriteArray(depth=1221, width=31):
