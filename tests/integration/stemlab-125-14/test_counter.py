@@ -12,14 +12,14 @@ class MyExampleCounter(TopModule):
         "width": 27,
         "default_start": 5,
         "default_step": 4,
-        "default_stop": 2**27-3,
+        "default_stop": 2**27 - 3,
         "default_on": False,
     }
     custom_up_counter: Counter(**_custom_up_counter_kwargs, direction="up")
 
     _custom_down_counter_kwargs = {
         "width": 27,
-        "default_start": 2**27-2,
+        "default_start": 2**27 - 2,
         "default_step": 2,
         "default_stop": 100,
         "default_on": False,
@@ -32,7 +32,6 @@ def my_example_counter(host, board):
     dut = MyExampleCounter.run(host=host, board=board)
     yield dut
     dut.stop()
-
 
 
 class TestCounter:
@@ -62,7 +61,7 @@ class TestCustomUpCounter:
     @pytest.fixture
     def _counter(self, my_example_counter):
         return my_example_counter.custom_up_counter
-        
+
     @pytest.fixture
     def counter_defaults(self, my_example_counter):
         return my_example_counter._custom_up_counter_kwargs
@@ -121,6 +120,7 @@ class TestCustomUpCounter:
         assert counter.done
         assert not counter.carry
 
+
 class TestCustomDownCounter(TestCustomUpCounter):
     direction = "down"
 
@@ -131,4 +131,3 @@ class TestCustomDownCounter(TestCustomUpCounter):
     @pytest.fixture
     def counter_defaults(self, my_example_counter):
         return my_example_counter._custom_down_counter_kwargs
-

@@ -15,16 +15,23 @@ class TestMigenPulseGenIntPeriod:
 
     @pytest.fixture
     def dut(self):
-        period_argument = self.period_type(self.period - 2)  # the actual period is 2 clock cycles more than the setting
-        yield MigenPulseGen(period=period_argument, on=self.on, high_after_on=self.high_after_on, first_cycle_period_offset=self.first_cycle_period_offset)
-    
-    @pytest.mark.skip
+        period_argument = self.period_type(
+            self.period - 2
+        )  # the actual period is 2 clock cycles more than the setting
+        yield MigenPulseGen(
+            period=period_argument,
+            on=self.on,
+            high_after_on=self.high_after_on,
+            first_cycle_period_offset=self.first_cycle_period_offset,
+        )
+
     def test_verilog(self, dut):
         print(verilog.convert(dut))
 
     def test_out(self, dut):
         print(f"\n\nStart {self.__class__.__name__}")
         width = len(dut.count)
+
         def assertions():
             for cycle in range(30):
                 expected_out = 0
@@ -34,14 +41,20 @@ class TestMigenPulseGenIntPeriod:
                             expected_out = 1
                     else:
                         if (cycle % self.period) == 0:
-                            if cycle > self.period - 1:  # 1 cycle latency causes the 0th clock cycle to have out=0
+                            if (
+                                cycle > self.period - 1
+                            ):  # 1 cycle latency causes the 0th clock cycle to have out=0
                                 expected_out = 1
-                print(f"Cycle {cycle:02d}: count={(yield dut.count):02d} (0b{(yield dut.count):0{width}b}) carry={(yield dut.carry)} out={(yield dut.out)} (expected={expected_out})")
-                if self.first_cycle_period_offset == 0:  # TODO: extend test to nonzero values
-                    assert (yield dut.out) == expected_out           
+                print(
+                    f"Cycle {cycle:02d}: count={(yield dut.count):02d} (0b{(yield dut.count):0{width}b}) carry={(yield dut.carry)} out={(yield dut.out)} (expected={expected_out})"
+                )
+                if (
+                    self.first_cycle_period_offset == 0
+                ):  # TODO: extend test to nonzero values
+                    assert (yield dut.out) == expected_out
                 yield
-        run_simulation(dut, assertions())
 
+        run_simulation(dut, assertions())
 
 
 class TestMigenPulseGenOff(TestMigenPulseGenIntPeriod):
@@ -56,7 +69,7 @@ class TestMigenPulseGenConstantPeriod(TestMigenPulseGenIntPeriod):
 class TestMigenPulseGenSignalPeriod(TestMigenPulseGenIntPeriod):
     def period_type(self, period):
         return Signal(32, reset=period)
-        
+
 
 class TestMigenPulseGenLowAfterOn(TestMigenPulseGenIntPeriod):
     high_after_on = False
@@ -67,7 +80,7 @@ class TestMigenPulseGenFirstCycleOffset(TestMigenPulseGenIntPeriod):
     high_after_on = False
     period = 5
     first_cycle_period_offset = 1
-    
+
 
 class TestMigenPulseBurstGenIntPulses:
     period = 1  # actual period is two clock cycles more than the setting
@@ -78,11 +91,13 @@ class TestMigenPulseBurstGenIntPulses:
 
     @pytest.fixture
     def dut(self):
-        pulses_argument = self.pulses_type(self.pulses) 
-        period_argument = self.period  
+        pulses_argument = self.pulses_type(self.pulses)
+        period_argument = self.period
         reset = Signal(1, reset=False)
         trigger = Signal(1, reset=False)
-        dut = MigenPulseBurstGen(trigger=trigger, reset=reset, pulses=pulses_argument, period=period_argument)
+        dut = MigenPulseBurstGen(
+            trigger=trigger, reset=reset, pulses=pulses_argument, period=period_argument
+        )
         dut._dut_reset = reset
         dut._dut_trigger = trigger
         yield dut
@@ -118,19 +133,25 @@ class TestMigenPulseBurstGenIntPulses:
 
     def test_out(self, dut):
         print(f"\n\nStart {self.__class__.__name__}")
-        expected = self.simulator()        
+        expected = self.simulator()
         trigger = self.trigger()
-        next(trigger)  # advance trigger cycle by one, as we need 1 cycle latency to feed trigger into the dut (migen-related issue)
+        next(
+            trigger
+        )  # advance trigger cycle by one, as we need 1 cycle latency to feed trigger into the dut (migen-related issue)
+
         def assertions():
             for cycle in range(self.cycles_to_simulate):
                 trigger_value = next(trigger)
                 yield dut._dut_trigger.eq(trigger_value)
                 expected_out, expected_busy, expected_count = next(expected)
-                print(f"Cycle {cycle:02d}: trigger={(yield dut._dut_trigger)} busy={(yield dut.busy)}({expected_busy}) out={(yield dut.out)}({expected_out}) count={(yield dut.count):02d}({expected_count:02d})")
+                print(
+                    f"Cycle {cycle:02d}: trigger={(yield dut._dut_trigger)} busy={(yield dut.busy)}({expected_busy}) out={(yield dut.out)}({expected_out}) count={(yield dut.count):02d}({expected_count:02d})"
+                )
                 assert (yield dut.out) == expected_out
                 assert (yield dut.busy) == expected_busy
                 assert (yield dut.count) == expected_count
                 yield
+
         run_simulation(dut, assertions())
 
 

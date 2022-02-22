@@ -29,7 +29,7 @@ class StemlabSoc(SoCCore):
         #     Instance("ODDR", o_Q=adc_pads.clk[1], i_D1=0, i_D2=1, i_CE=1, i_C=self.cd_adc.clk),
         # ]
         # self.comb += adc_pads.cdcs.eq(1)
-    
+
     def _attach_top(self, top):
         self.submodules.top = top
         self.csr_devices.append("top")

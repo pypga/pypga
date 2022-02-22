@@ -84,7 +84,7 @@ class Client:
 
     def read_from_ram(self, offset: int, length: int) -> np.ndarray:
         """Reads data from from the dedicated RAM area.
-        
+
         Args:
             offset: the offset from the start address, in bytes.
             length: the amount of uint32 data points to read, i.e. in units of 4-byte chunks.

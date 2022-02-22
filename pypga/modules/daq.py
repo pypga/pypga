@@ -14,6 +14,7 @@ from pypga.modules.migen.pulsegen import MigenPulseBurstGen
 from pypga.modules.migen.axiramwriter import MigenAxiRamWriter
 import numpy as np
 
+
 def DAQ(
     data_depth: int = 1024,
     data_width: int = 14,
@@ -178,7 +179,9 @@ def RAMDAQ(
                 # ),
             ]
             # RAM writer
-            self.submodules.axiramwriter = MigenAxiRamWriter(address=0xa000000, we=1, data=123)
+            self.submodules.axiramwriter = MigenAxiRamWriter(
+                address=0xA000000, we=1, data=123
+            )
             # self.sync += [
             #     self.axiramwriter.address.eq(0xa000000),
             #     self.axiramwriter.we.eq(1),

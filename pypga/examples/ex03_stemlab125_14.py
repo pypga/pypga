@@ -12,9 +12,9 @@ class MyStemlabTest(TopModule):
         data_depth=1024,
         data_width=14,
         data_decimals=13,
-        initial_data=list(range(0, 2 ** 13, 8)),
+        initial_data=list(range(0, 2**13, 8)),
         sampling_period_width=32,
-        default_sampling_period=10,
+        default_sampling_period_cycles=10,
         repetitions_width=32,
         default_repetitions=1,
     )

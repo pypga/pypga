@@ -248,11 +248,11 @@ class _FixedPointRegister(_NumberRegister):
 
     def to_python(self, value):
         value = _NumberRegister.to_python(self, value)
-        value = float(value) / (2 ** self.decimals - 1)
+        value = float(value) / (2**self.decimals - 1)
         return value
 
     def from_python(self, value):
-        value = int(round(float(value) * (2 ** self.decimals - 1)))
+        value = int(round(float(value) * (2**self.decimals - 1)))
         value = _NumberRegister.from_python(self, value)
         return value
 

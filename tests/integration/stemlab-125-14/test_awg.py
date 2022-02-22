@@ -1,12 +1,12 @@
 from pypga.modules.awg import Awg
 from pypga.core import TopModule
 import pytest
-import time
-import math
 
 
 class MyExampleAwg(TopModule):
-    rom_awg: Awg(data=[i for i in range(100)])
+    """broken, needs an update"""
+
+    # rom_awg: Awg(data=[i for i in range(100)])
 
 
 @pytest.fixture(scope="module")
@@ -15,6 +15,8 @@ def my_example_awg(host, board):
     yield dut
     dut.stop()
 
+
+@pytest.mark.skip(reason="API changed, need to rewrite this test")
 class TestRomAwg:
     @pytest.fixture
     def awg(self, my_example_awg):

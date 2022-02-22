@@ -21,13 +21,16 @@ def ReadonlyArray(depth=1000, width=31):
                 self.array_we.eq(self.we_re),
                 self.array_index.eq(self.index),
             ]
+
     return _ReadonlyArray
+
 
 @pytest.fixture(scope="module")
 def readonly_array(host, board):
     dut = ReadonlyArray().run(host=host, board=board)
     yield dut
     dut.stop()
+
 
 class TestReadonlyArray:
     @pytest.fixture
@@ -51,12 +54,12 @@ class TestReadonlyArray:
         try:
             assert actual[index] == value
             assert np.array_equal(actual, expected)
-        finally: 
+        finally:
             # retore initial values for subsequent tests
             dut.index = index
             dut.dat_w = dut.initial_data[index]
             dut.we = 1
-        
+
     @pytest.mark.parametrize("repetitions", [10, 20])
     def test_read_time(self, dut, repetitions):
         start_time = time.time()
@@ -65,4 +68,3 @@ class TestReadonlyArray:
         duration = (time.time() - start_time) / repetitions
         print(duration, "s")
         assert duration < 0.01
-

@@ -145,7 +145,7 @@ class Module:
     @property
     def _ram_start(self):
         # TODO: generalize to multiple boards
-        return 0xa000000
+        return 0xA000000
 
 
 DEFAULT_BOARD = "stemlab125_14"
@@ -159,7 +159,15 @@ class TopModule(Module):
 
     @classmethod
     @functools.wraps(RemoteInterface)
-    def run(cls, *args, host=None, board=DEFAULT_BOARD, autobuild=True, forcebuild=False, **kwargs):
+    def run(
+        cls,
+        *args,
+        host=None,
+        board=DEFAULT_BOARD,
+        autobuild=True,
+        forcebuild=False,
+        **kwargs,
+    ):
         """Runs the design on a board and returns an interfaced instance."""
         builder = get_builder(board=board, module_class=cls)
         if forcebuild or not builder.result_exists:

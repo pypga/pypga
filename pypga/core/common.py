@@ -43,6 +43,7 @@ def get_reset_value(signal: Union[Signal, Constant, int]) -> int:
         except AttributeError:
             return int(signal)
 
+
 def get_width_and_depth(data: List[int], width: int = None) -> Tuple[int, int]:
     """Returns the width and depth required to store data."""
     if width is None:

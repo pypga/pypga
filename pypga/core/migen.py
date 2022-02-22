@@ -51,7 +51,6 @@ class AutoMigenModule(MigenModule, AutoCSR):
             print("no conncet_to_soc found")
         logger.debug(f"Finished migen module for module class {module_class.__name__}.")
 
-
     def _add_submodule(self, submodule, name, platform):
         logger.debug(f"Creating submodule {name} of type {submodule.__name__}.")
         migen_submodule = AutoMigenModule(submodule, platform)

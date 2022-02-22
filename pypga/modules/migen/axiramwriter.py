@@ -14,17 +14,15 @@ from misoc.interconnect.csr import *
 AXI_ADDRESS_WIDTH = 32
 AXI_DATA_WIDTH = 64
 AXI_BURST_LEN = 16
-AXI_ALIGNMENT_BITS = log2_int(AXI_BURST_LEN*AXI_DATA_WIDTH//8)
+AXI_ALIGNMENT_BITS = log2_int(AXI_BURST_LEN * AXI_DATA_WIDTH // 8)
 AXI_ALIGNED_ADDRESS_WIDTH = AXI_ADDRESS_WIDTH - AXI_ALIGNMENT_BITS
-
-
 
 
 class MigenAxiRamWriter(MigenModule):
     def __init__(
-        self, 
-        data: Signal, 
-        address: Signal, 
+        self,
+        data: Signal,
+        address: Signal,
         we: Signal,
     ):
         """
