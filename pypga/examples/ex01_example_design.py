@@ -10,7 +10,7 @@ def SingleLedBlinker(default_rate=2 ** 6):
 
     class _SingleLedBlinker(Module):
         # define a register that is accessible from Python
-        rate: Register.custom(width=counter_width, default=default_rate)
+        rate: Register(width=counter_width, default=default_rate)
 
         # programmable logic is marked by the @logic decorator
         @logic
