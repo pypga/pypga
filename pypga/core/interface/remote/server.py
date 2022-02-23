@@ -1,6 +1,6 @@
 import logging
 import uuid
-from pathlib import Path
+from pathlib import Path, PosixPath
 from time import sleep
 
 from paramiko import SSHException
@@ -15,7 +15,7 @@ class Server:
     _srcfiles = list(
         (Path(__file__).parent.resolve() / "server").glob(f"{_servername}_*.*")
     )
-    _destpath = Path("/root/pypga")
+    _destpath = PosixPath("/root/pypga")
 
     def run(self, command=""):
         return self.shell.ask(command)
@@ -34,8 +34,8 @@ class Server:
             delay=delay,
         )
         self.stop()
-        self.run(f"mkdir {self._destpath}")
-        self.run(f"cd {self._destpath}")
+        self.run(f"mkdir {self.destpath}")
+        self.run(f"cd {self.destpath}")
         if bitstreamfile is not None:
             self.flash_bitstream(bitstreamfile)
         if start:
@@ -72,7 +72,7 @@ class Server:
             return True
 
     def flash_bitstream(self, filename: str):
-        destpath = str(self._destpath / self._bitstreamname)
+        destpath = str(self._destpath / self._bitstreamname).replace("\\","/")
         self.put(filename, destpath)
         self.stop()
         self.run("killall nginx")
@@ -88,7 +88,7 @@ class Server:
         if self.bitstream_flashed_recently:
             logging.info("FPGA is being flashed. Waiting for 2 seconds.")
             sleep(2.0)
-        destpath = str(self._destpath / "server")
+        destpath = str(self._destpath / "server").replace("\\","/")
         for serverfile in self._srcfiles:
             try:
                 self.shell.scp.put(serverfile, destpath)
@@ -96,6 +96,7 @@ class Server:
                 logging.warning("Upload error.", exc_info=True)
             self.run(f"chmod 755 {destpath}")
             result = self.run(f"{destpath} {self.port} {self.generate_new_token()}")
+            print("RESULT",result)
             sleep(self._delay)
             result += self.run()
             if not "sh" in result:
