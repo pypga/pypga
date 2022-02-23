@@ -34,8 +34,8 @@ class Server:
             delay=delay,
         )
         self.stop()
-        self.run(f"mkdir {self.destpath}")
-        self.run(f"cd {self.destpath}")
+        self.run(f"mkdir {self._destpath}")
+        self.run(f"cd {self._destpath}")
         if bitstreamfile is not None:
             self.flash_bitstream(bitstreamfile)
         if start:
@@ -48,9 +48,10 @@ class Server:
 
     @property
     def bitstream_flashed_recently(self) -> bool:
+        destpath = self._destpath / self._bitstreamname
         self.run("")  # flush output
         result = self.run(
-            f'echo $(($(date +%s) - $(date +%s -r "{self._destpath / self._bitstreamname}")))'
+            f'echo $(($(date +%s) - $(date +%s -r "{destpath}")))'
         )
         for line in result.split("\n"):
             try:
@@ -72,7 +73,7 @@ class Server:
             return True
 
     def flash_bitstream(self, filename: str):
-        destpath = str(self._destpath / self._bitstreamname).replace("\\","/")
+        destpath = str(self._destpath / self._bitstreamname)
         self.put(filename, destpath)
         self.stop()
         self.run("killall nginx")
@@ -85,10 +86,10 @@ class Server:
         return self.token
 
     def start(self) -> str:
+        destpath = str(self._destpath / "server")
         if self.bitstream_flashed_recently:
             logging.info("FPGA is being flashed. Waiting for 2 seconds.")
             sleep(2.0)
-        destpath = str(self._destpath / "server").replace("\\","/")
         for serverfile in self._srcfiles:
             try:
                 self.shell.scp.put(serverfile, destpath)
