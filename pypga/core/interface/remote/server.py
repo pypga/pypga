@@ -30,8 +30,9 @@ class Server:
             delay=delay,
         )
         self.stop()
-        self.run(f"mkdir {self._destpath}")
-        self.run(f"cd {self._destpath}")
+        destpath=str(self._destpath).replace("\\","/")
+        self.run(f"mkdir {destpath}")
+        self.run(f"cd {destpath}")
         if bitstreamfile is not None:
             self.flash_bitstream(bitstreamfile)
         if start:
@@ -45,7 +46,8 @@ class Server:
     @property
     def bitstream_flashed_recently(self) -> bool:
         self.run("")  # flush output
-        result = self.run(f"echo $(($(date +%s) - $(date +%s -r \"{self._destpath / self._bitstreamname}\")))")
+        path=str(self._destpath / self._bitstreamname).replace("\\","/")
+        result = self.run(f"echo $(($(date +%s) - $(date +%s -r \"{path}\")))")
         for line in result.split('\n'):
             try: age = int(line.strip())
             except ValueError: pass
@@ -61,7 +63,7 @@ class Server:
             return True
 
     def flash_bitstream(self, filename: str):
-        destpath = str(self._destpath / self._bitstreamname)
+        destpath = str(self._destpath / self._bitstreamname).replace("\\","/")
         self.put(filename, destpath)
         self.stop()
         self.run("killall nginx")
@@ -77,7 +79,7 @@ class Server:
         if self.bitstream_flashed_recently:
             logging.info("FPGA is being flashed. Waiting for 2 seconds.")
             sleep(2.0)
-        destpath = str(self._destpath / "server")
+        destpath = str(self._destpath / "server").replace("\\","/")
         for serverfile in self._srcfiles:
             try:
                 self.shell.scp.put(serverfile, destpath)
@@ -85,6 +87,7 @@ class Server:
                 logging.warning("Upload error.", exc_info=True)
             self.run(f'chmod 755 {destpath}')
             result = self.run(f"{destpath} {self.port} {self.generate_new_token()}")
+            print("RESULT",result)
             sleep(self._delay)
             result += self.run()
             if not "sh" in result:
