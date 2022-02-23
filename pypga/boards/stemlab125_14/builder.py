@@ -2,7 +2,6 @@ import logging
 
 from migen_axi.platforms import redpitaya
 from misoc.integration import cpu_interface
-
 from pypga.boards.stemlab125_14.soc import StemlabSoc
 from pypga.core.builder import BaseBuilder
 from pypga.core.migen import AutoMigenModule
@@ -54,7 +53,7 @@ class Builder(BaseBuilder):
         )
         self.soc._attach_top(self.top)
         logger.debug("Running vivado build...")
-        self.soc.build(build_dir=self.build_path)
+        self.soc.build(build_dir=self.build_path, run=True)
         self._export_register_addresses()
         logger.debug(f"Finished build for {self.__class__.__name__}.")
         self.copy_results()

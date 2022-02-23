@@ -12,7 +12,7 @@ from pypga.core import (
     logic,
 )
 from pypga.core.register import TriggerRegister
-from pypga.modules.migen.axiramwriter import MigenAxiRamWriter
+from pypga.modules.migen.axiwriter import MigenAxiWriter
 from pypga.modules.migen.pulsegen import MigenPulseBurstGen
 
 
