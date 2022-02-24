@@ -23,21 +23,17 @@ class TestAxiWriterHP0:
     @pytest.fixture
     def dut(self, axiwriter):
         dut = axiwriter.axiwriter
-        dut.aw_t = False
-        dut.w_t = False
         dut.address = 0xa000000
+        dut.reset()
         yield dut
-        dut.aw_t = False
-        dut.w_t = False
-        dut.address = 0xa000000
 
     @pytest.mark.parametrize("value", [0, 1, 100, 2345])
     @pytest.mark.parametrize("offset", [0, 8, 16, 80])
     def test_write(self, dut, value, offset):
         dut.data = value
         dut.address += offset
-        dut.trigger_count = 150
-        dut.t()
+        dut.trigger_count = 1
+        dut.we()
         time.sleep(0.01)
         data = dut.read_from_ram(offset=offset, length=2)
         print(data)

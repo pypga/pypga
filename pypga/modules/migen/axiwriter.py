@@ -1,15 +1,18 @@
+from typing import Any, Union
+
 from pypga.core import MigenModule
-from migen import Cat, If, Signal
-from typing import Any
-from pypga.modules.migen.counter import MigenCounter
+
+from migen import Cat, ClockDomainsRenamer, Constant, If, Signal
+from migen.genlib.fifo import AsyncFIFOBuffered
+
 
 class MigenAxiWriter(MigenModule):
     def __init__(
         self,
+        address: Union[Signal, Constant, int],
         data: Signal,
-        address: Signal,
         we: Signal,
-        trigger_count: Signal,
+        reset: Union[Signal, Constant, bool], 
         axi_hp: Any,  # an AXI_HP instance
     ):
         """
@@ -23,35 +26,31 @@ class MigenAxiWriter(MigenModule):
         Output signals:
             ack: .
         """
+        # high-level signals
         self.idle = Signal()
         self.error = Signal()
+        # low-level signals
+        self.ready = Signal()
+        # obsolete
         self.aw_valid = Signal()
         self.w_valid = Signal()
         self.aw_ready = Signal()
         self.w_ready = Signal()
-        ###
 
-        # add a counter to keep the trigger high for a few cycles
-        self.submodules.counter = MigenCounter(
-            start=trigger_count,
-            stop=0,
-            step=1,
-            on=True,
-            reset=we,
-            direction="down",
-        )
+        ###
+        fifo = ClockDomainsRenamer({"write": "sys", "read": "sys"})(AsyncFIFOBuffered(64, 32))  # 64 bits, 32 samples
+        self.submodules += fifo
 
         aw = axi_hp.aw
         w = axi_hp.w
         b = axi_hp.b
-        
+
         aw_valid = Signal()
         w_valid = Signal()
-        t = Signal()
+
         self.sync += [
-            t.eq(~self.counter.done),
             If(
-                (t==1), 
+                (we==1), 
                 aw_valid.eq(1)
             ).Elif(
                 aw.ready,
@@ -60,7 +59,7 @@ class MigenAxiWriter(MigenModule):
                 aw_valid.eq(0),
             ),
             If(
-                (t==1),
+                (we==1),
                 w_valid.eq(1)
             ).Elif(
                 w.ready,
@@ -71,13 +70,21 @@ class MigenAxiWriter(MigenModule):
         ]
         
         # address part
+        self.offset = Signal(25, reset=0)  # 32 MB
+        self.sync += If(
+            reset == 1,
+            self.offset.eq(0)
+        ).Else(
+            self.offset.eq(self.offset + 0)
+        )
+
         self.comb += [
-            aw.addr.eq(address),
             aw.id.eq(0), 
-            aw.burst.eq(0),
+            aw.addr.eq(address + self.offset),
             aw.len.eq(0),  # Number of transfers in burst (0->1 transfer, 1->2 transfers...).
             aw.size.eq(3), # Width of burst: 3 = 8 bytes = 64 bits.
-            aw.cache.eq(0b1111),
+            aw.burst.eq(0),  # no burst, fixed width
+            aw.cache.eq(0b1111),  # bufferable, and cacheable
             aw.valid.eq(aw_valid),
             self.aw_valid.eq(aw_valid),
             self.aw_ready.eq(aw.ready),
@@ -106,14 +113,6 @@ class MigenAxiWriter(MigenModule):
         #                 )
         #             )
         #         ]
-
-        #         # Busy generation
-        #         remaining_sys = Signal(AXI_ADDRESS_WIDTH - log2_int(AXI_DATA_WIDTH//8))
-        #         self.sync += [
-        #            If(self.start, remaining_sys.eq(self.length << log2_int(AXI_BURST_LEN))),
-        #            If(fifo.readable & fifo.re, remaining_sys.eq(remaining_sys - 1))
-        #         ]
-        #         self.comb += self.busy.eq(re_sys != 0)
 
         #         # status part
         self.comb += b.ready.eq(1)

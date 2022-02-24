@@ -10,22 +10,21 @@ def AXIWriter(axi_hp_index=0):
         address: Register(width=32, default=0x0a000000)
         data: Register(width=32, default=0x00000000)
 
-        t: TriggerRegister()
-        trigger_count: Register(width=16, reset=100)
+        we: TriggerRegister()
+        reset: TriggerRegister()
 
-        aw_ready: BoolRegister(readonly=True)
-        aw_valid: BoolRegister(readonly=True)        
-        w_ready: BoolRegister(readonly=True)
-        w_valid: BoolRegister(readonly=True)
+        error: BoolRegister(readonly=True)
+        idle: BoolRegister(readonly=True)        
+        ready: BoolRegister(readonly=True)
         
         @logic
         def _connect_to_soc(self, platform, soc):
             hp = getattr(soc.ps7, f"s_axi_hp{axi_hp_index}")
             self.submodules.axiwriter = MigenAxiWriter(
-                data=self.data,
                 address=self.address,
-                we=self.t,
-                trigger_count=self.trigger_count,
+                data=self.data,
+                we=self.we,
+                reset=self.reset,
                 axi_hp=hp,
             )
 
