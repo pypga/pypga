@@ -20,9 +20,10 @@ def Mux(options: List[str], width: int = None) -> type:
     """
     A MUX whose input can be selected using a register.
     """
+    options = list(options)
 
     class _Mux(Module):
-        _select: Register(width=len(options).bit_length(), signed=False)
+        _select: Register(width=len(options).bit_length(), signed=False, default=0)
         _options = options
 
         @logic
@@ -35,7 +36,6 @@ def Mux(options: List[str], width: int = None) -> type:
             self.submodules.mux = MigenMux(
                 select=self._select,
                 options=[getattr(self, option) for option in options],
-                default=0,
             )
             self.comb += self.out.eq(self.mux.out)
 
@@ -45,7 +45,12 @@ def Mux(options: List[str], width: int = None) -> type:
 
         @select.setter
         def select(self, option):
-            self._select = self._options.index(option)
+            try:
+                self._select = self._options.index(option)
+            except ValueError:
+                raise ValueError(
+                    f"The desired value {option} is not an option in {self._options}."
+                )
 
         # def __get__(self, instance, owner=None):
         #     # experimental feature

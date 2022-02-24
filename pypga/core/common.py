@@ -1,5 +1,5 @@
 import shutil
-from typing import List, Tuple, Union
+from typing import Any, List, Tuple, Union
 
 from migen import Constant, Signal
 
@@ -50,3 +50,9 @@ def get_width_and_depth(data: List[int], width: int = None) -> Tuple[int, int]:
         assert min(data) >= 0
         width = max(data).bit_length()
     return width, len(data)
+
+
+def get_signal(root: Any, path: str) -> Signal:
+    for part in path.split("."):
+        root = getattr(root, part)
+    return root

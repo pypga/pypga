@@ -50,9 +50,7 @@ class Server:
     def bitstream_flashed_recently(self) -> bool:
         destpath = self._destpath / self._bitstreamname
         self.run("")  # flush output
-        result = self.run(
-            f'echo $(($(date +%s) - $(date +%s -r "{destpath}")))'
-        )
+        result = self.run(f'echo $(($(date +%s) - $(date +%s -r "{destpath}")))')
         for line in result.split("\n"):
             try:
                 age = int(line.strip())
@@ -97,7 +95,7 @@ class Server:
                 logging.warning("Upload error.", exc_info=True)
             self.run(f"chmod 755 {destpath}")
             result = self.run(f"{destpath} {self.port} {self.generate_new_token()}")
-            print("RESULT",result)
+            print("RESULT", result)
             sleep(self._delay)
             result += self.run()
             if not "sh" in result:

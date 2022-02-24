@@ -2,6 +2,7 @@ import logging
 
 from migen_axi.platforms import redpitaya
 from misoc.integration import cpu_interface
+
 from pypga.boards.stemlab125_14.soc import StemlabSoc
 from pypga.core.builder import BaseBuilder
 from pypga.core.migen import AutoMigenModule

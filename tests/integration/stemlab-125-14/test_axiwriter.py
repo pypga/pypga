@@ -3,6 +3,7 @@ import time
 
 import numpy as np
 import pytest
+
 from pypga.core import Register, TopModule
 from pypga.core.logic_function import logic
 from pypga.modules.axiwriter import AXIWriter
@@ -15,7 +16,7 @@ class TestAxiWriterHP0:
     def axiwriter(self, host, board):
         class AxiWriterTester(TopModule):
             axiwriter: AXIWriter(axi_hp_index=self._axi_hp_index)
-        
+
         dut = AxiWriterTester.run(host=host, board=board)
         yield dut
         dut.stop()
@@ -23,7 +24,7 @@ class TestAxiWriterHP0:
     @pytest.fixture
     def dut(self, axiwriter):
         dut = axiwriter.axiwriter
-        dut.address = 0xa000000
+        dut.address = 0xA000000
         dut.reset()
         yield dut
 
