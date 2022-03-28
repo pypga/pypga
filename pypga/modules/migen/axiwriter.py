@@ -38,10 +38,10 @@ class MigenAxiWriter(MigenModule):
         self.w_ready = Signal()
 
         ###
-        fifo = ClockDomainsRenamer({"write": "sys", "read": "sys"})(
-            AsyncFIFOBuffered(64, 32)
-        )  # 64 bits, 32 samples
-        self.submodules += fifo
+        # fifo = ClockDomainsRenamer({"write": "sys", "read": "sys"})(
+        #     AsyncFIFOBuffered(64, 32)
+        # )  # 64 bits, 32 samples
+        # self.submodules += fifo
 
         aw = axi_hp.aw
         w = axi_hp.w
@@ -70,17 +70,12 @@ class MigenAxiWriter(MigenModule):
         ]
 
         # address part
-        self.offset = Signal(25, reset=0)  # 32 MB
-        self.sync += If(reset == 1, self.offset.eq(0)).Else(
-            self.offset.eq(self.offset + 0)
-        )
-
         self.comb += [
             aw.id.eq(0),
-            aw.addr.eq(address + self.offset),
+            aw.addr.eq(address),
             aw.len.eq(
                 0
-            ),  # Number of transfers in burst (0->1 transfer, 1->2 transfers...).
+            ),  # Number of transfers in burst (0->1 transfer, 1->2 transfers ...)
             aw.size.eq(3),  # Width of burst: 3 = 8 bytes = 64 bits.
             aw.burst.eq(0),  # no burst, fixed width
             aw.cache.eq(0b1111),  # bufferable, and cacheable
@@ -92,7 +87,7 @@ class MigenAxiWriter(MigenModule):
         # data part
         self.comb += [
             w.id.eq(0),
-            w.data.eq(Cat(data, data)),
+            w.data.eq(data),
             w.strb.eq(0b11111111),
             w.last.eq(w_valid),
             w.valid.eq(w_valid),

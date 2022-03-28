@@ -3,7 +3,7 @@ import numpy as np
 from pypga.core import Module, logic
 from pypga.core.register import BoolRegister, Register, TriggerRegister
 from pypga.modules.migen.axiwriter import MigenAxiWriter
-
+from migen import Cat
 
 def AXIWriter(axi_hp_index=0):
     class AXIWriter_(Module):
@@ -22,7 +22,7 @@ def AXIWriter(axi_hp_index=0):
             hp = getattr(soc.ps7, f"s_axi_hp{axi_hp_index}")
             self.submodules.axiwriter = MigenAxiWriter(
                 address=self.address,
-                data=self.data,
+                data=Cat(self.data, self.data),
                 we=self.we,
                 reset=self.reset,
                 axi_hp=hp,

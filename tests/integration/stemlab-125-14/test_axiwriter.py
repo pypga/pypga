@@ -28,8 +28,8 @@ class TestAxiWriterHP0:
         dut.reset()
         yield dut
 
-    @pytest.mark.parametrize("value", [0, 1, 100, 2345])
-    @pytest.mark.parametrize("offset", [0, 8, 16, 80])
+    @pytest.mark.parametrize("value", [0, 1, 100, 2345, 111])
+    @pytest.mark.parametrize("offset", [0, 8, 16, 80, 8000, 8888, 2**23-8])
     def test_write(self, dut, value, offset):
         dut.data = value
         dut.address += offset
@@ -40,12 +40,13 @@ class TestAxiWriterHP0:
         print(data)
         assert tuple(data) == (value, value)
 
+@pytest.mark.skip(reason="speed up tests")
+class TestAxiWriterHP1(TestAxiWriterHP0):
+    _axi_hp_index = 1
 
-# class TestAxiWriterHP1(TestAxiWriterHP0):
-#     _axi_hp_index = 1
+@pytest.mark.skip(reason="speed up tests")
+class TestAxiWriterHP2(TestAxiWriterHP0):
+    _axi_hp_index = 2
 
-# class TestAxiWriterHP2(TestAxiWriterHP0):
-#     _axi_hp_index = 2
-
-# class TestAxiWriterHP3(TestAxiWriterHP0):
-#     _axi_hp_index = 3
+class TestAxiWriterHP3(TestAxiWriterHP0):
+    _axi_hp_index = 3

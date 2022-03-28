@@ -1,8 +1,9 @@
 import functools
 import logging
 
-from migen import If, Memory, Signal
 from misoc.interconnect.csr import CSRStatus, CSRStorage
+
+from migen import If, Memory, Signal
 
 from .common import CustomizableMixin
 
@@ -12,6 +13,9 @@ logger = logging.getLogger(__name__)
 class _Register(CustomizableMixin):
     def _add_migen_commands(self, name, module):
         name_csr = f"{name}_csr"
+        if self.ram_offset is not None:
+            # nothing to do, the register is simply an area in RAM
+            pass
         if self.depth == 1:
             if self.readonly:
                 csr_instance = CSRStatus(
@@ -89,6 +93,7 @@ class _Register(CustomizableMixin):
     depth: int = 1
     reverse: bool = False  # set True to invert the order of Python arrays.
     doc: str = ""
+    ram_offset: int = None  # if True, data is read from RAM rather than from FPGA bus
 
     _SEP = "_"
 
@@ -122,19 +127,22 @@ class _Register(CustomizableMixin):
         logger.debug(f"Reading {self.name} with {instance}/{owner}")
         if instance is None:
             return self
-        if self.depth == 1:
+        if self.depth == 1 and self.ram_offset is None:
             value = instance._interface.read(self._get_full_name(instance))
             return self.to_python(value)
         else:
-            value = instance._interface.read_array(
-                self._get_full_name(instance), length=self.depth
-            )
+            if self.ram_offset is None:
+                value = instance._interface.read_array(
+                    self._get_full_name(instance), length=self.depth
+                )
+            else:
+                value = instance._interface.read_from_ram(self.ram_offset, self.depth*2)[::2]
             if self.reverse:
                 value = reversed(value)
             return [self.to_python(v) for v in value]
 
     def __set__(self, instance, value):
-        if self.readonly:
+        if self.readonly or self.ram_offset is not None:
             raise ValueError(
                 f"The register {self.instance.name}.{self.name} is read-only."
             )

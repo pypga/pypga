@@ -95,7 +95,6 @@ class Server:
                 logging.warning("Upload error.", exc_info=True)
             self.run(f"chmod 755 {destpath}")
             result = self.run(f"{destpath} {self.port} {self.generate_new_token()}")
-            print("RESULT", result)
             sleep(self._delay)
             result += self.run()
             if not "sh" in result:
