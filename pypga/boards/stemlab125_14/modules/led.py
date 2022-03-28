@@ -1,5 +1,6 @@
 from migen import *
-from ..core import Module, logic, Register
+
+from ..core import Module, Register, logic
 
 
 class Led(Module):

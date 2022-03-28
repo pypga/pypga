@@ -1,30 +1,32 @@
-from pypga.modules.counter import ExampleCounter
-from pypga.core import TopModule
-import pytest
-import time
 import math
+import time
+
+import pytest
+
+from pypga.core import TopModule
+from pypga.modules.counter import Counter
 
 
 class MyExampleCounter(TopModule):
-    default_counter: ExampleCounter()
+    default_counter: Counter()
 
     _custom_up_counter_kwargs = {
         "width": 27,
         "default_start": 5,
         "default_step": 4,
-        "default_stop": 2**27-3,
+        "default_stop": 2**27 - 3,
         "default_on": False,
     }
-    custom_up_counter: ExampleCounter(**_custom_up_counter_kwargs, direction="up")
+    custom_up_counter: Counter(**_custom_up_counter_kwargs, direction="up")
 
     _custom_down_counter_kwargs = {
         "width": 27,
-        "default_start": 2**27-2,
+        "default_start": 2**27 - 2,
         "default_step": 2,
         "default_stop": 100,
         "default_on": False,
     }
-    custom_down_counter: ExampleCounter(**_custom_down_counter_kwargs, direction="down")
+    custom_down_counter: Counter(**_custom_down_counter_kwargs, direction="down")
 
 
 @pytest.fixture(scope="module")
@@ -34,12 +36,11 @@ def my_example_counter(host, board):
     dut.stop()
 
 
-
 class TestCounter:
     @pytest.fixture
     def counter(self, my_example_counter):
         counter = my_example_counter.default_counter
-        counter.reset = True
+        counter.reset()
         yield counter
 
     @pytest.mark.parametrize("delay", [0.1, 0.3])
@@ -62,7 +63,7 @@ class TestCustomUpCounter:
     @pytest.fixture
     def _counter(self, my_example_counter):
         return my_example_counter.custom_up_counter
-        
+
     @pytest.fixture
     def counter_defaults(self, my_example_counter):
         return my_example_counter._custom_up_counter_kwargs
@@ -73,7 +74,7 @@ class TestCustomUpCounter:
         _counter.start = counter_defaults["default_start"]
         _counter.step = counter_defaults["default_step"]
         _counter.stop = counter_defaults["default_stop"]
-        _counter.reset = True
+        _counter.reset()
         yield _counter
 
     def test_initial_state(self, counter, counter_defaults):
@@ -114,12 +115,13 @@ class TestCustomUpCounter:
         else:
             sign = -1
         counter.stop = counter.start + sign * counter.step * 23
-        counter.reset = True
+        counter.reset()
         counter.on = True
         time.sleep(0.1)
         assert counter.count == counter.stop
         assert counter.done
         assert not counter.carry
+
 
 class TestCustomDownCounter(TestCustomUpCounter):
     direction = "down"
@@ -131,4 +133,3 @@ class TestCustomDownCounter(TestCustomUpCounter):
     @pytest.fixture
     def counter_defaults(self, my_example_counter):
         return my_example_counter._custom_down_counter_kwargs
-

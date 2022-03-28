@@ -1,13 +1,15 @@
-from migen import Module as MigenModule
-from migen import Signal, If
-from migen.build.generic_platform import GenericPlatform
-from migen.fhdl.verilog import convert
-from misoc.interconnect.csr import AutoCSR, CSRStorage, CSRStatus
-from .register import _Register
+import hashlib
 import logging
 import typing
-import hashlib
 
+from migen import If
+from migen import Module as MigenModule
+from migen import Signal
+from migen.build.generic_platform import GenericPlatform
+from migen.fhdl.verilog import convert
+from misoc.interconnect.csr import AutoCSR, CSRStatus, CSRStorage
+
+from .register import _Register
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +21,8 @@ class AutoMigenModule(MigenModule, AutoCSR):
         module_class (:class:`Module`): The module definition to extract a migen module from.
 
     """
-    def __init__(self, module_class, platform: GenericPlatform):
+
+    def __init__(self, module_class, platform: GenericPlatform, soc: typing.Any):
         logger.debug(f"Creating migen module for module class {module_class.__name__}.")
         registers = module_class._pypga_registers
         logic_functions = module_class._pypga_logic
@@ -35,50 +38,38 @@ class AutoMigenModule(MigenModule, AutoCSR):
             self._add_register(register, name)
         # then create the submodules to be able to access them from the logic at this level
         for name, submodule in submodules.items():
-            self._add_submodule(submodule, name, platform)
+            self._add_submodule(submodule, name, platform, soc)
         # finally add all the custom logic
         for name, logic_function in logic_functions.items():
-            self._add_logic_function(logic_function, name, platform)
+            self._add_logic_function(logic_function, name, platform=platform, soc=soc)
         logger.debug(f"Finished migen module for module class {module_class.__name__}.")
 
-    def _add_submodule(self, submodule, name, platform):
+    def _add_submodule(self, submodule, name, platform, soc):
         logger.debug(f"Creating submodule {name} of type {submodule.__name__}.")
-        migen_submodule = AutoMigenModule(submodule, platform)
+        migen_submodule = AutoMigenModule(submodule, platform, soc)
         setattr(self.submodules, name, migen_submodule)
         # TODO: remove the next line, it seems to be redundant as migen automatically does this
-        setattr(self, name, migen_submodule)  # also make the submodule available via `self.name`
+        setattr(
+            self, name, migen_submodule
+        )  # also make the submodule available via `self.name`
 
     def _add_register(self, register, name):
         if not isinstance(register, _Register):
-            register = register()  # create a register instance to retrieve attributes in case a class was passed
+            register = (
+                register()
+            )  # create a register instance to retrieve attributes in case a class was passed
         logger.debug(f"Creating register {name} of type {register.__class__.__name__}.")
-        name_csr = f"{name}_csr"
-        if register.depth == 1:
-            if register.readonly:
-                register_instance = CSRStatus(size=register.width, reset=register.default, name=name_csr)
-                setattr(self, name_csr, register_instance)
-                setattr(self, name, register_instance.status)
-            else:
-                register_instance = CSRStorage(size=register.width, reset=register.default, name=name_csr)
-                setattr(self, name_csr, register_instance)
-                setattr(self, name, register_instance.storage)
-                setattr(self, f"{name}_re", register_instance.re)
-        else:  # register has nontrivial depth
-            if register.readonly:
-                register_instance = CSRStorage(size=register.width, reset=register.default, name=name_csr, write_from_dev=True)
-                setattr(self, name_csr, register_instance)
-                setattr(self, name, register_instance.dat_w)
-                setattr(self, f"{name}_re", register_instance.re)
-                setattr(self, f"{name}_we", register_instance.we)
-                setattr(self, f"{name}_index", register_instance.storage)
- 
+        register._add_migen_commands(name=name, module=self)
 
-    def _add_logic_function(self, logic_function, name, platform):
+    def _add_logic_function(self, logic_function, name, platform, soc):
         logger.debug(f"Implementing logic from function {name}.")
         try:
-            return_value = logic_function(self, platform=platform)
+            return_value = logic_function(self, platform=platform, soc=soc)
         except TypeError:
-            return_value = logic_function(self)
+            try:
+                return_value = logic_function(self, platform=platform)
+            except TypeError:
+                return_value = logic_function(self)
         if return_value is not None:
             setattr(self, logic_function.__name__, return_value)
 

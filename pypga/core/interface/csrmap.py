@@ -15,5 +15,5 @@ class CsrMap:
                 self.size[name] = int(row[2])
                 self.mode[name] = str(row[3])
 
-    def __getitem__ (self, item):
+    def __getitem__(self, item):
         return self.address[item], self.size[item], self.mode[item]

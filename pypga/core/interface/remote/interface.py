@@ -1,7 +1,10 @@
+from typing import List, Union
+
+import numpy as np
+
 from ..interface import BaseInterface
 from .client import Client
 from .server import Server
-from typing import List, Union
 
 
 class RemoteInterface(BaseInterface):
@@ -28,7 +31,9 @@ class RemoteInterface(BaseInterface):
             write_value = [int(value)]
         self.client.writes(address, write_value)
 
+    def read_from_ram(self, offset: int = 0, length: int = 1) -> np.ndarray:
+        return self.client.read_from_ram(offset, length)
+
     def stop(self):
         self.client.stop()
         self.server.stop()
-        

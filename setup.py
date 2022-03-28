@@ -11,5 +11,6 @@ setup(
         "migen-axi@git+https://github.com/pypga/migen-axi@master",
         "pydantic>=1.5.1",
         "paramiko>=2.7.2",
+        
     ),
 )

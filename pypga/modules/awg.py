@@ -1,72 +1,130 @@
-from migen import Memory, Cat
-from ..core import Module, logic, Register, NumberRegister, BoolRegister, Signal, If, MigenModule
-from .counter import MigenCounter
-from .rom import MigenRom
-from .pulsegen import MigenPulseGen
+import numpy as np
+
+from pypga.core import (
+    BoolRegister,
+    FixedPointRegister,
+    MigenModule,
+    Module,
+    NumberRegister,
+    Register,
+    Signal,
+    logic,
+)
+from pypga.core.register import TriggerRegister
+from pypga.modules.migen.pulsegen import MigenPulseBurstGen
 
 
-class MigenRomAwg(MigenModule):
-    def __init__(self, data: list, width: int = None, reset=None, on=True, period=0):
-        """
-        A read-only memory module.
+def ramp(start: float = -1, stop: float = 1, points: int = 1024):
+    """Returns a ramp signal."""
+    ramp = np.empty(points, dtype=float)
+    ramp[: points // 2] = np.linspace(start, stop, points // 2)
+    ramp[points // 2 :] = np.linspace(start, stop, (points - points // 2))[::-1]
+    return ramp
 
-        Args:
-            data (list): values of the rom.
-            width (int or NoneType): the bit-width of each value, or None to
-              automatically infer this from the data.
-        
-        Input signals / args:
-            on: whether the AWG should go to its next point or pause.
-            reset: resets the AWG to its initial state. If None, the 
-              AWG is automatically reset when it's done.
-            period: the sampling period.
 
-        Output signals:
-            value: a signal with the ROM value at the current index.
-        """
-        self.value = Signal(width)
-        self.done = Signal(reset=0)
-        ###
-        if reset is None:
-            reset = self.done
-        counter_on = Signal()
-        self.submodules.counter = MigenCounter(
-            start=len(data)-1, 
-            stop=0, 
-            step=1, 
-            direction="down", 
-            width=(len(data)-1).bit_length(),
-            on=counter_on, 
-            reset=reset if reset is not None else self.done,
-            )
-        self.submodules.rom = MigenRom(index=self.counter.count, data=list(reversed(data)), width=width)
-        self.submodules.pulsegen = MigenPulseGen(
-            period=period,
-            on=on,
-            high_after_on=True,
+def Awg(
+    data_depth: int = 1024,
+    data_width: int = 14,
+    data_decimals: int = 0,
+    initial_data: list = None,
+    sampling_period_width=32,
+    default_sampling_period_cycles=10,
+    repetitions_width=32,
+    default_repetitions=1,
+):
+    """
+    A programmable AWG module.
+
+    Args:
+        data (list): initial values of the AWG.
+        width (int or NoneType): the bit-width of each value, or None to
+            automatically infer this from the data.
+
+    Input signals / args:
+        on: whether the AWG should go to its next point or pause.
+        reset: resets the AWG to its initial state. If None, the
+            AWG is automatically reset when it's done.
+        sampling_period: the sampling period.
+
+    Output signals:
+        value: a signal with the ROM value at the current index.
+    """
+
+    class _Awg(Module):
+        data: FixedPointRegister(
+            width=data_width,
+            depth=data_depth,
+            default=initial_data,
+            reverse=True,
+            readonly=False,
+            signed=True,
+            decimals=data_decimals,
         )
-        self.comb += [
-            self.value.eq(self.rom.value),
-            self.done.eq(self.counter.done),
-            counter_on.eq(self.pulsegen.out),
-        ]
-
-
-def ExampleRomAwg(data: list, default_on=True, period_width=32, default_period=8):
-    width, _ = MigenRom._get_width_and_depth(data)
-
-    class _ExampleRomAwg(Module):
-        period: NumberRegister(width=period_width, default=default_period-2, offset_from_python=-2, min=2)
-        out: Register(width=width, readonly=True, default=0, doc="the current output value")
-        on: BoolRegister(default=default_on)
+        sampling_period_cycles: NumberRegister(
+            width=sampling_period_width,
+            default=default_sampling_period_cycles - 2,
+            offset_from_python=-2,
+            min=2,
+        )
+        # repetitions: NumberRegister(width=repetitions_width, default=default_repetitions, offset_from_python=0, min=0)
+        out: NumberRegister(
+            width=data_width,
+            readonly=True,
+            default=0,
+            doc="the current output value",
+            signed=True,
+        )
+        always_on: BoolRegister(default=False)
+        software_trigger: TriggerRegister()
 
         @logic
-        def _connections(self):
-            self.done = Signal()
-            self.submodules.awg = MigenRomAwg(data=data, width=width, period=self.period, on=self.on)
+        def _awg(self):
+            self.done = Signal(reset=0)
+            self.trigger = Signal(reset=0)
+            self.out_trigger = Signal(reset=0)
+            ###
+            _trigger = Signal(reset=0)
             self.comb += [
-                self.out.eq(self.awg.value),
-                self.done.eq(self.awg.done),
+                _trigger.eq(self.trigger | self.software_trigger | self.always_on)
+            ]
+            self.submodules.pulseburst = MigenPulseBurstGen(
+                trigger=_trigger,
+                reset=False,
+                pulses=data_depth - 1,
+                period=self.sampling_period_cycles,
+            )
+            self.comb += [
+                self.done.eq(~self.pulseburst.busy),
+                self.data_index.eq(self.pulseburst.count),
+                self.out_trigger.eq(self.pulseburst.out),
+                self.out.eq(self.data),
             ]
 
-    return _ExampleRomAwg
+        @property
+        def sampling_period(self) -> float:
+            return self.sampling_period_cycles * self._clock_period
+
+        @sampling_period.setter
+        def sampling_period(self, sampling_period: float):
+            self.sampling_period_cycles = sampling_period / self._clock_period
+
+        @property
+        def period(self) -> float:
+            return data_depth * self.sampling_period
+
+        @period.setter
+        def period(self, period: float):
+            self.sampling_period = period / data_depth
+
+        @property
+        def frequency(self) -> float:
+            return 1.0 / self.period
+
+        @frequency.setter
+        def frequency(self, frequency: float):
+            self.period = 1.0 / frequency
+
+        def set_ramp(self, start: float = -1.0, stop: float = 1.0):
+            self.data = ramp(start=start, stop=stop, points=data_depth)
+
+    return _Awg

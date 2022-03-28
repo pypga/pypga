@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from .csrmap import CsrMap
 from typing import List, Union
+
+from .csrmap import CsrMap
 
 
 class BaseInterface(ABC):
@@ -28,7 +29,7 @@ class BaseInterface(ABC):
         """Writes ``value`` to the register ``name``."""
         self.write_to_address(self.name_to_address(name), value)
 
-    def write(self, name: str, value: List[int]):
+    def write_array(self, name: str, value: List[int]):
         """Writes each element in the array ``value`` to the register ``name``."""
         self.write_to_address(self.name_to_address(name), value)
 

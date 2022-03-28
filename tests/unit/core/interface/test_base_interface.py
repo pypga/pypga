@@ -1,7 +1,8 @@
 import inspect
-import pytest
-from pypga.core.interface.csrmap import CsrMap
 
+import pytest
+
+from pypga.core.interface.csrmap import CsrMap
 
 CSR_CSV = inspect.cleandoc(
     """

@@ -1,17 +1,21 @@
 import logging
-from scp import SCPException
-from paramiko import SSHException
-from time import sleep
 import uuid
-from pathlib import Path
+from pathlib import Path, PosixPath
+from time import sleep
+
+from paramiko import SSHException
+from scp import SCPException
+
 from .sshshell import SshShell
 
 
 class Server:
     _servername = "server"
     _bitstreamname = "bitstream.bin"
-    _srcfiles = list((Path(__file__).parent.resolve() / "server").glob(f"{_servername}_*.*"))
-    _destpath = Path("/root/pypga")
+    _srcfiles = list(
+        (Path(__file__).parent.resolve() / "server").glob(f"{_servername}_*.*")
+    )
+    _destpath = PosixPath("/root/pypga")
 
     def run(self, command=""):
         return self.shell.ask(command)
@@ -39,17 +43,21 @@ class Server:
 
     def stop(self):
         self.token = None
-        self.run('\x03')  # exit running server application
-        self.run('killall server')  # make sure no other server blocks the port
+        self.run("\x03")  # exit running server application
+        self.run("killall server")  # make sure no other server blocks the port
 
     @property
     def bitstream_flashed_recently(self) -> bool:
+        destpath = self._destpath / self._bitstreamname
         self.run("")  # flush output
-        result = self.run(f"echo $(($(date +%s) - $(date +%s -r \"{self._destpath / self._bitstreamname}\")))")
-        for line in result.split('\n'):
-            try: age = int(line.strip())
-            except ValueError: pass
-            else: break
+        result = self.run(f'echo $(($(date +%s) - $(date +%s -r "{destpath}")))')
+        for line in result.split("\n"):
+            try:
+                age = int(line.strip())
+            except ValueError:
+                pass
+            else:
+                break
         else:
             logging.debug(f"Could not retrieve bitstream file age from: {result}")
             return False
@@ -57,7 +65,9 @@ class Server:
             logging.debug(f"Found expired bitstream file with an age of {age} seconds.")
             return False
         else:
-            logging.debug(f"Found a recent bitstream file with an age of {age} seconds.")
+            logging.debug(
+                f"Found a recent bitstream file with an age of {age} seconds."
+            )
             return True
 
     def flash_bitstream(self, filename: str):
@@ -74,16 +84,16 @@ class Server:
         return self.token
 
     def start(self) -> str:
+        destpath = str(self._destpath / "server")
         if self.bitstream_flashed_recently:
             logging.info("FPGA is being flashed. Waiting for 2 seconds.")
             sleep(2.0)
-        destpath = str(self._destpath / "server")
         for serverfile in self._srcfiles:
             try:
                 self.shell.scp.put(serverfile, destpath)
             except (SCPException, SSHException):
                 logging.warning("Upload error.", exc_info=True)
-            self.run(f'chmod 755 {destpath}')
+            self.run(f"chmod 755 {destpath}")
             result = self.run(f"{destpath} {self.port} {self.generate_new_token()}")
             sleep(self._delay)
             result += self.run()
@@ -93,5 +103,7 @@ class Server:
             else:  # we tried the wrong binary version. make sure server is not running and try again with next file
                 self.stop()
         else:
-            raise RuntimeError(f"Server application could not be started with any of {[f for f in self._srcfiles]}.")
+            raise RuntimeError(
+                f"Server application could not be started with any of {[f for f in self._srcfiles]}."
+            )
         return self.token
