@@ -1,9 +1,10 @@
 import pytest
+import os
 
 
 @pytest.fixture(scope="session")
 def host():
-    return "rp"
+    return os.getenv("REDPITAYA_HOSTNAME", "rp")
 
 
 @pytest.fixture(scope="session")
