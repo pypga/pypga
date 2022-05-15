@@ -26,6 +26,23 @@ class MigenGpio(MigenModule):
         self.comb += [tst.oe.eq(is_output), tst.o.eq(output), self.input.eq(tst.i)]
 
 
+def get_migen_gpio(platform, is_output: Signal, output: Signal) -> MigenGpio:
+    """
+    Returns an interface to all general purpose I/O pins of the board.
+
+    Args:
+        platform: platform object for the design.
+        output: the signal to set the pins to.
+        is_output: array with 1-bit signals indicating which pins to use as outputs.
+
+    Returns:
+        A MigenGpio instance interfacing the pins.
+    """
+    exp = platform.request("exp")
+    gpio_pins = Cat(exp.p, exp.n)  # [:width]
+    return MigenGpio(gpio_pins=gpio_pins, is_output=is_output, output=output)
+
+
 # TODO: Can we set these parameters, especially pulldown=true?
 # set_property IOSTANDARD LVCMOS33 [get_ports {exp_p_io[*]}]
 # set_property IOSTANDARD LVCMOS33 [get_ports {exp_n_io[*]}]
@@ -59,11 +76,10 @@ def ExampleGpio(width=16, set_from_python=False):
 
         @logic
         def _setup(self, platform):
-            exp = platform.request("exp")
-            gpio_pins = Cat(exp.p, exp.n)  # [:width]
+
             ###
-            self.submodules.gpio = MigenGpio(
-                gpio_pins=gpio_pins,
+            self.submodules.gpio = get_migen_gpio(
+                platform=platform,
                 is_output=self.is_output,
                 output=self.output,
             )

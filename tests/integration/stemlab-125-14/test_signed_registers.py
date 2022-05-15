@@ -27,7 +27,6 @@ def AddMultiply(width=8):
                 self.product_unsigned.eq(self.a * self.b),
                 self.a_above_b.eq(self.a > self.b),
             ]
-
     return _AddMultiply
 
 
