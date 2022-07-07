@@ -4,6 +4,7 @@ from misoc.cores.spi2 import SPIInterface, SPIMachine, SPIMaster
 from pypga.core import If, MigenModule, Signal
 
 from migen import Case, Cat, Constant, Record, Replicate
+from pypga.core.common import get_length
 
 
 class MigenSPI(MigenModule):
@@ -35,7 +36,7 @@ class MigenSPI(MigenModule):
         self.busy = Signal()
 
         ### logic
-        clock_div_width = clock_div.bit_length()
+        clock_div_width = get_length(clock_div)
         self.submodules.spi = SPIMachine(
             data_width=data_width, 
             div_width=clock_div_width
@@ -59,7 +60,7 @@ class MigenSPI(MigenModule):
             self.cs.eq(
                 (Replicate(self.spi.cs_next, cs_width) 
                 & (Constant(1, cs_width) << cs))
-                ^ ~Replicate(cs_polarity, cs_width)    
+                ^ Replicate(cs_polarity, cs_width)    
             ),
             # self.cs.eq(
             #     (Replicate(~self.spi.idle, cs_width) 
