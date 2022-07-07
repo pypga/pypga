@@ -5,7 +5,7 @@ from pypga.core.register import Register
 
 
 class MigenGpio(MigenModule):
-    def __init__(self, gpio_pins, is_output, output):
+    def __init__(self, gpio_pins, is_output=0, output=0):
         """
         General purpose I/O pin interface.
 
@@ -21,9 +21,20 @@ class MigenGpio(MigenModule):
         """
         width = len(gpio_pins)
         self.input = Signal(width)
-        tst = TSTriple(width)
-        self.specials += tst.get_tristate(gpio_pins)
-        self.comb += [tst.oe.eq(is_output), tst.o.eq(output), self.input.eq(tst.i)]
+        is_output_signal = Signal(width)
+        output_signal = Signal(width)
+        self.comb += [
+            is_output_signal.eq(is_output),
+            output_signal.eq(output),
+        ]
+        tst = [TSTriple(1) for _ in range(width)]
+        self.specials += [tst[i].get_tristate(gpio_pins[i]) for i in range(width)]
+        for i in range(width):
+            self.comb += [
+                tst[i].oe.eq(is_output_signal[i]), 
+                tst[i].o.eq(output_signal[i]), 
+                self.input[i].eq(tst[i].i)
+        ]
 
 
 def get_migen_gpio(platform, is_output: Signal, output: Signal) -> MigenGpio:
@@ -39,8 +50,8 @@ def get_migen_gpio(platform, is_output: Signal, output: Signal) -> MigenGpio:
         A MigenGpio instance interfacing the pins.
     """
     exp = platform.request("exp")
-    gpio_pins = Cat(exp.p, exp.n)  # [:width]
-    return MigenGpio(gpio_pins=gpio_pins, is_output=is_output, output=output)
+    gpio_pins = [gpio[i] for gpio in [exp.p, exp.n] for i in range(len(gpio))]
+    return MigenGpio(gpio_pins, is_output=is_output, output=output)
 
 
 # TODO: Can we set these parameters, especially pulldown=true?

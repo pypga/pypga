@@ -7,20 +7,41 @@ from pypga.modules.migen.spi import MigenSPI
 
 
 class TestMigenSPI:
-    data_width = 16
-
+    data_width = 20  # there seems to be a bug for "round" numbers like 32
+    cs_width = 3
     @pytest.fixture
+
     def dut(self):
         start = Signal()
         data = Signal(self.data_width)
-        spi = MigenSPI(
-            start=start,
-            data=data,
-            data_width=self.data_width,
-            clock_div=3,
-            clock_polarity=True,
-            cs_polarity=False,
-        )
+        if False:
+            spi = MigenSPI(
+                cs=self.cs_width-1,
+                start=start,
+                data=data,
+                data_width=self.data_width,
+                clock_div=4,
+                clock_polarity=False,
+                clock_phase=False,
+                cs_polarity=False,
+                lsb_first=False,
+                cs_width=self.cs_width,
+            )
+        else:
+            data = Signal(24)
+            spi = MigenSPI(
+                start=start,  # triggers the next transfer
+                cs=0,  # index of chip to select to assert during the next transfer
+                data=data,  # data to write during the next transfer
+                data_width=24,  # number of bits per transfer
+                cs_width=1,  # number of CS wires to use
+                cs_polarity=True,  # polarity of the chip-select signals, True = active high
+                clock_div=2,  # fraction of the clock rate to use as SPI clock
+                clock_polarity=True,  # clock polarity
+                clock_phase=False,  # clock phase
+                lsb_first=False,  # send LSB rather than MSB first
+            )
+
         spi._start = start
         spi._data = data
         yield spi
@@ -29,7 +50,7 @@ class TestMigenSPI:
     def test_verilog(self, dut):
         print(verilog.convert(dut))
 
-    start_delay = 8
+    start_delay = 5
     def start(self):
         for _ in range(self.start_delay):
             yield 0
@@ -39,7 +60,7 @@ class TestMigenSPI:
 
     def data(self):
         while True:
-            yield 1234
+            yield 0b11011010011101101001
 
     def simulator(self):
         """Generator returning expected values for out, busy, and count."""
@@ -54,13 +75,15 @@ class TestMigenSPI:
         start = self.start()
         simulator = self.simulator()
         def assertions():
-            for cycle in range(100):
+            for cycle in range(300):
                 yield dut._data.eq(next(data))
                 yield dut._start.eq(next(start))
+                yield dut.miso.eq(Constant(cycle%3%2))
                 print(
-                    f"Cycle {cycle:02d}: start={(yield dut._start)} clk={(yield dut.clk)} cs={(yield dut.cs)} mosi={(yield dut.mosi)} busy={(yield dut.busy)}",
-                    f"Cycle {cycle:02d}: start={(yield dut._start)} count={(yield dut.spi.cg.count)} done={(yield dut.spi.cg.done)} extend={(yield dut.spi.cg.extend)} div={(yield dut.spi.cg.div)} length={(yield dut.spi.length)} n={(yield dut.spi.n)}"
+                    f"Cycle {cycle:03d}: start={(yield dut._start)} clk={(yield dut.clk)} cs={(yield dut.cs):0{self.cs_width}b} mosi={(yield dut.mosi)} busy={(yield dut.busy)} cs_next={(yield dut.spi.cs_next)}",
+                    f"\ncount={(yield dut.spi.cg.count)} done={(yield dut.spi.cg.done)} extend={(yield dut.spi.cg.extend)} div={(yield dut.spi.cg.div)} length={(yield dut.spi.length)} n={(yield dut.spi.n):02d} reg.sdo={(yield dut.spi.reg.sdo)} reg.sdi={(yield dut.spi.reg.sdi)} reg.sr={(yield dut.spi.reg.sr):0{self.data_width}b} reg.pdi={(yield dut.spi.reg.pdi):0{self.data_width}b} reg.load={(yield dut.spi.reg.load)} reg.shift={(yield dut.spi.reg.shift)} reg.pdo={(yield dut.spi.reg.pdo):0{self.data_width}b}\n"
                 )
                 yield
 
         run_simulation(dut, assertions())
+
