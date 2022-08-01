@@ -86,10 +86,9 @@ class MigenPulseBurstGen(MigenModule):
               burst sequence and staying zero afterwards.
         """
         self.out = Signal(reset=0)
-        self.count = Signal(reset=0)
+        self.count = Signal(get_length(pulses), reset=0)
         self.busy = Signal(reset=False)
         ###
-        self.count = Signal(get_length(pulses), reset=0)
         pulsegen_on = Signal(reset=0)
         self.submodules.pulsegen = MigenPulseGen(
             period=period,

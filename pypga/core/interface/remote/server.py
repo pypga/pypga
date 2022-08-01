@@ -74,8 +74,8 @@ class Server:
         destpath = str(self._destpath / self._bitstreamname)
         self.put(filename, destpath)
         self.stop()
-        self.run("killall nginx")
-        self.run("systemctl stop redpitaya_nginx")
+        #self.run("killall nginx")
+        #self.run("systemctl stop redpitaya_nginx")
         self.run(f"cat {destpath} > //dev//xdevcfg")
         self.shell.ask(f"rm -f {destpath}")  # clean up the bitstream
 

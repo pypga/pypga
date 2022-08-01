@@ -16,19 +16,25 @@ class _Register(CustomizableMixin):
         if self.ram_offset is not None:
             # nothing to do, the register is simply an area in RAM
             pass
+        value_signal = Signal(
+            (self.width, self.signed), 
+            reset=self.default if self.depth == 1 else 0, 
+            name=name,
+        )
+        setattr(module, name, value_signal)
         if self.depth == 1:
             if self.readonly:
                 csr_instance = CSRStatus(
                     size=self.width, reset=self.default, name=name_csr
                 )
                 setattr(module, name_csr, csr_instance)
-                setattr(module, name, csr_instance.status)
+                module.comb += csr_instance.status.eq(value_signal)
             else:
                 csr_instance = CSRStorage(
                     size=self.width, reset=self.default, name=name_csr
                 )
                 setattr(module, name_csr, csr_instance)
-                setattr(module, name, csr_instance.storage)
+                module.comb += value_signal.eq(csr_instance.storage)
                 setattr(module, f"{name}_re", csr_instance.re)
         else:  # register has nontrivial depth, implement as a memory
             if self.default is None:
@@ -70,6 +76,7 @@ class _Register(CustomizableMixin):
             if self.readonly:
                 # add signals to the migen module to write to the memory from the PL
                 setattr(module, name, pl_port.dat_w)
+                module.comb += pl_port.dat_w.eq(value_signal)
                 setattr(module, f"{name}_index", pl_port.adr)
                 setattr(module, f"{name}_we", pl_port.we)
             else:
@@ -82,7 +89,7 @@ class _Register(CustomizableMixin):
                 module.sync += ps_port.dat_w.eq(csr_instance.storage[1:])
                 module.sync += ps_port.we.eq(update_value)
                 # add signals to the migen module to read from the memory from the PL
-                setattr(module, name, pl_port.dat_r)
+                module.comb += value_signal.eq(pl_port.dat_r)
                 setattr(module, f"{name}_index", pl_port.adr)
 
     name: str = None
@@ -94,6 +101,8 @@ class _Register(CustomizableMixin):
     reverse: bool = False  # set True to invert the order of Python arrays.
     doc: str = ""
     ram_offset: int = None  # if True, data is read from RAM rather than from FPGA bus
+
+    signed: bool = False
 
     _SEP = "_"
 
@@ -202,9 +211,9 @@ class _TriggerRegister(_Register):
 
 
 class _NumberRegister(_Register):
-    signed: bool = False
     min: int = None
     max: int = None
+    signed: bool = True
 
     @property
     def _int_max(self):

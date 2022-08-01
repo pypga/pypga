@@ -1,11 +1,11 @@
 import logging
 
-from migen_axi.platforms import redpitaya
+from pypga.core.migen_axi.platforms import redpitaya
 from misoc.integration import cpu_interface
-
 from pypga.boards.stemlab125_14.soc import StemlabSoc
 from pypga.core.builder import BaseBuilder
 from pypga.core.migen import AutoMigenModule
+
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,7 @@ class Builder(BaseBuilder):
         self._platform.toolchain.additional_commands.extend(
             [
                 'write_cfgmem -force -format BIN -size 2 -interface SMAPx32 -disablebitswap -loadbit "up 0x0 ./top.bit" ./bitstream.bin',
+                'report_timing -file ./top_post_route_timing.rpt -sort_by group -max_paths 100 -path_type summary',
             ]
         )
 
@@ -55,6 +56,17 @@ class Builder(BaseBuilder):
         self.soc._attach_top(self.top)
         logger.debug("Running vivado build...")
         self.soc.build(build_dir=self.build_path, run=True)
+        self._check_timing_constraints_are_met()
         self._export_register_addresses()
         logger.debug(f"Finished build for {self.__class__.__name__}.")
         self.copy_results()
+
+    def _check_timing_constraints_are_met(self):
+        """Raises an exception if there are timing violations."""
+        with open(self.build_path / "vivado.log", "r") as file:
+            lines = [line.strip() for line in file.readlines()]
+            if "All user specified timing constraints are met." not in lines:
+                raise RuntimeError(
+                    "Timing constraints of this design could not be met. Please "
+                    "check the build logs for hints on how to improve timing."
+                )
