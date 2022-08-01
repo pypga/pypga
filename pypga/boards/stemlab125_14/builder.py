@@ -1,11 +1,11 @@
 import logging
 
-from migen_axi.platforms import redpitaya
+from pypga.core.migen_axi.platforms import redpitaya
 from misoc.integration import cpu_interface
-
 from pypga.boards.stemlab125_14.soc import StemlabSoc
 from pypga.core.builder import BaseBuilder
 from pypga.core.migen import AutoMigenModule
+
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,7 @@ class Builder(BaseBuilder):
         self._platform.toolchain.additional_commands.extend(
             [
                 'write_cfgmem -force -format BIN -size 2 -interface SMAPx32 -disablebitswap -loadbit "up 0x0 ./top.bit" ./bitstream.bin',
+                'report_timing -file ./top_post_route_timing.rpt -sort_by group -max_paths 100 -path_type summary',
             ]
         )
 
