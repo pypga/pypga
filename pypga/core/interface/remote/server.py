@@ -1,6 +1,6 @@
 import logging
 import uuid
-from pathlib import Path, PosixPath
+from pathlib import Path, PurePosixPath
 from time import sleep
 
 from paramiko import SSHException
@@ -15,7 +15,7 @@ class Server:
     _srcfiles = list(
         (Path(__file__).parent.resolve() / "server").glob(f"{_servername}_*.*")
     )
-    _destpath = PosixPath("/root/pypga")
+    _destpath = PurePosixPath("/root/pypga")
 
     def run(self, command=""):
         return self.shell.ask(command)
