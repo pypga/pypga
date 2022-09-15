@@ -1,6 +1,1 @@
-git+https://github.com/m-labs/migen@master#egg=migen
-git+https://github.com/m-labs/misoc@master#egg=misoc
-git+https://github.com/peteut/migen-axi@master#egg=migen-axi
-pydantic>=1.5.1
-paramiko>=2.7.2
-scp>=0.14.1
+.
