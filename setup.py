@@ -12,5 +12,6 @@ setup(
         "pydantic>=1.5.1",
         "paramiko>=2.7.2",
         "scp>=0.14.1",
+        "numpy>=1.21.4",
     ),
 )
