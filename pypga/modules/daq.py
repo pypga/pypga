@@ -132,7 +132,7 @@ def DAQ(
                     raise ValueError(f"Only 4 AXI_HP ports are available, the desired index {axi_hp_index} is out of range.")
                 hp = getattr(soc.ps7, f"s_axi_hp{axi_hp_index}")
                 address = Signal(32)
-                ram_base_address = Constant(0xA000000, 32)
+                ram_base_address = Constant(_ram_start_address, 32)
                 ram_size = 0x2000000
                 ram_mask = Constant(ram_size-1, 32)
                 self.sync += address.eq(ram_base_address | (ram_mask & Cat(Constant(0, 3), self.pulseburst.count, Constant(0, 32))))
