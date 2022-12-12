@@ -1,6 +1,7 @@
 from typing import List, Union
 
-from misoc.cores.spi2 import SPIInterface, SPIMachine, SPIMaster
+# from misoc.cores.spi2 import SPIInterface, SPIMachine, SPIMaster
+from .spimachine import SPIMachine
 from pypga.core import If, MigenModule, Signal
 
 from migen import Case, Cat, Constant, Record, Replicate

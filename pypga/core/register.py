@@ -1,6 +1,7 @@
 import functools
 import logging
 
+import numpy as np
 from misoc.interconnect.csr import CSRStatus, CSRStorage
 
 from migen import If, Memory, Signal
@@ -8,7 +9,6 @@ from migen import If, Memory, Signal
 from .common import CustomizableMixin
 
 logger = logging.getLogger(__name__)
-
 
 class _Register(CustomizableMixin):
     def _add_migen_commands(self, name, module):
@@ -118,6 +118,10 @@ class _Register(CustomizableMixin):
         value -= self.offset_from_python
         return value
 
+    def _to_python_array(self, value):
+        """Faster version of to_python() for arrays"""
+        return [self.to_python(v) for v in value]
+
     def from_python(self, value):
         value = int(value)
         value += self.offset_from_python
@@ -148,7 +152,7 @@ class _Register(CustomizableMixin):
                 value = instance._interface.read_from_ram(self.ram_offset, self.depth*2)[::2]
             if self.reverse:
                 value = reversed(value)
-            return [self.to_python(v) for v in value]
+            return self._to_python_array(value)
 
     def __set__(self, instance, value):
         if self.readonly or self.ram_offset is not None:
@@ -175,6 +179,13 @@ class _BoolRegister(_Register):
         if self.invert:
             value = not value
         return value
+
+    # optional optimization, untested
+    # def _to_python_array(self, value):
+    #     value = np.asarray(value)
+    #     value -= self.offset_from_python
+    #     value = np.array(((value >> self.bit) & 0x1), dtype=bool)
+    #     return value
 
     def from_python(self, value):
         if self.invert:
@@ -231,9 +242,17 @@ class _NumberRegister(_Register):
 
     def to_python(self, value):
         value = _Register.to_python(self, value)
-        if self.signed and value >= (1 << (self.width - 1)):
-            value -= 1 << self.width
+        if self.signed:
+            if value >= (1 << (self.width - 1)):
+                value -= 1 << self.width
         return int(value)
+
+    def _to_python_array(self, value):
+        value = np.asarray(value)
+        value -= self.offset_from_python
+        if self.signed:
+            value[value >= (1 << (self.width - 1))] -= 1 << self.width
+        return value
 
     def before_from_python(self, value):
         if self.max is not None and value > self.max:
@@ -268,6 +287,11 @@ class _FixedPointRegister(_NumberRegister):
         value = float(value) / (2**self.decimals - 1)
         return value
 
+    def _to_python_array(self, value):
+        value = _NumberRegister._to_python_array(self, value)
+        value = np.array(value, dtype=float) / (2**self.decimals - 1)
+        return value
+
     def from_python(self, value):
         value = int(round(float(value) * (2**self.decimals - 1)))
         value = _NumberRegister.from_python(self, value)
@@ -279,5 +303,6 @@ BoolRegister = _BoolRegister.custom
 TriggerRegister = _TriggerRegister.custom
 NumberRegister = _NumberRegister.custom
 FixedPointRegister = _FixedPointRegister.custom
-# TODO: add CallableBoolRegister
-# TODO: add explicit arguments to custom for type completion
+
+
+# TODO: add explicit arguments to custom for type completion, or go with @dataclass for automatically doing this

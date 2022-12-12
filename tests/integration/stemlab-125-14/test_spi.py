@@ -108,22 +108,22 @@ class TestSPI:
         assert dut.read_data == data, (hex(dut.read_data), hex(data))
         print(bin(dut._digital_outputs))
 
-    def test_spi(self, dut):
+    def test_spi(self, dut, repetitions=100):
         dut.cs = 0
         dut.cs_polarity = True
-        dut.clock_div = 2
+        dut.clock_div = 200
         dut.clock_polarity = True
         dut.clock_phase = False
         values = 1024 // 4
         factor = 2**20 // values
         dut.write_data = 0
         dut.start()
-        for i in range(10000):
+        for _ in range(repetitions):
             for code in range(values):
                 time.sleep(0.0003)
                 code = (code * factor) << 4
                 code = min(code, 2**24 - 1)
-                # dut.write_data = 0b101010101010101010101010
+                # dut.write_data = 0b001010101010101010101010
                 dut.write_data = code
                 print(bin(dut._digital_outputs))
                 dut.start()

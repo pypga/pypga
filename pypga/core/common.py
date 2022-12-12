@@ -1,4 +1,5 @@
 import shutil
+from dataclasses import dataclass
 from typing import Any, List, Tuple, Union
 
 from migen import Constant, Signal
@@ -8,11 +9,22 @@ from .settings import settings
 
 class CustomizableMixin:
     """A mix-in to add a classmethod ``custom`` to any class."""
-
     @classmethod
     def custom(cls, **kwargs):
         """Returns a subclass with all passed kwargs set as class attributes."""
         return type(f"Custom{cls.__name__}", (cls,), kwargs)
+
+
+@dataclass
+class CustomizableDataclassMixin:
+    """A mix-in to add a classmethod ``custom`` to any class."""
+    @classmethod
+    def custom(cls, **kwargs):
+        """Returns a subclass with all passed kwargs set as class attributes."""
+        CustomKwargs = type(f"CustomKwargs", (), kwargs)
+        CustomKwargs.__annotations__ = {k: v for k, v in cls.__annotations__.items() if k in kwargs}
+        CustomKwargs = dataclass(CustomKwargs)
+        return dataclass(type(f"Custom{cls.__name__}", (CustomKwargs, cls,), {}))
 
 
 def empty_path(path):
