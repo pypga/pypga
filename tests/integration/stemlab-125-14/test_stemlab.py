@@ -1,7 +1,7 @@
 import pytest
 
-from pypga.core.testsupport.integration import BaseIntegrationTest
-from pypga.examples.ex03_stemlab125_14 import MyStemlabTest
+# from pypga.core.testsupport.integration import BaseIntegrationTest
+# from pypga.examples.ex03_stemlab125_14 import MyStemlabTest
 
 # class TestStemlab(BaseIntegrationTest):
 #     DUT = MyStemlabTest
