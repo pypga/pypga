@@ -7,6 +7,7 @@ from paramiko import SSHException
 from scp import SCPException
 
 from .sshshell import SshShell
+import pypga
 
 
 class Server:
@@ -29,8 +30,8 @@ class Server:
         self.shell = SshShell(
             hostname=host,
             sshport=22,
-            user="root",
-            password="qlibri2000xxx",
+            user=pypga.config.user,
+            password=pypga.config.password,
             delay=delay,
         )
         self.stop()
