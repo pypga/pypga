@@ -79,6 +79,7 @@ class Register(Module):
                 sr.eq(self.pdi),
                 self.sdo.eq(Mux(self.lsb_first, self.pdi[0], self.pdi[-1]))
             ),
+            #
             If(self.load,
                 sr.eq(self.pdo),
                 self.sdo.eq(Mux(self.lsb_first, self.pdo[0], self.pdo[-1]))
