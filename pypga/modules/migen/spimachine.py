@@ -127,7 +127,7 @@ class SPIMachine(Module):
         ]
         self.sync += [
                 If(reg.load,
-                    n.eq(self.length),
+                    n.eq(self.length - 1),
                     end.eq(self.end)
                 ),
                 If(reg.shift,
@@ -144,11 +144,29 @@ class SPIMachine(Module):
                 self.cs_next.eq(0),#1
                 If(self.load,
                     cg.count.eq(1),
-                    reg.load.eq(1),
+                    NextState("START1")
+                )
+        )
+        fsm.act("START1",
+                self.cs_next.eq(1),
+                cg.count.eq(1),
+                cg.extend.eq(1),
+                self.clk_next.eq(0),
+                If(cg.done,
+                   NextState("START2")
+                )
+        )
+        fsm.act("START2",
+                self.cs_next.eq(1),
+                cg.count.eq(1),
+                cg.extend.eq(1),
+                self.clk_next.eq(0),
+                If(cg.done,
                     If(self.clk_phase,
                         NextState("PRE"),
                     ).Else(
                         cg.extend.eq(1),
+                        reg.load.eq(1),
                         NextState("SETUP"),
                     )
                 )
@@ -158,7 +176,8 @@ class SPIMachine(Module):
                 self.cs_next.eq(1),
                 cg.count.eq(1),
                 cg.extend.eq(1),
-                self.clk_next.eq(1),
+                self.clk_next.eq(0),
+                reg.load.eq(1),
                 If(cg.done,
                     NextState("SETUP")
                 )
@@ -166,7 +185,7 @@ class SPIMachine(Module):
         fsm.act("SETUP",
                 self.cs_next.eq(1),
                 cg.count.eq(1),
-                self.clk_next.eq(~self.clk_phase),
+                self.clk_next.eq(self.clk_phase),
                 If(cg.done,
                     reg.sample.eq(1),
                     NextState("HOLD")
@@ -176,7 +195,7 @@ class SPIMachine(Module):
                 self.cs_next.eq(1),
                 cg.count.eq(1),
                 cg.extend.eq(1),
-                self.clk_next.eq(self.clk_phase),
+                self.clk_next.eq(~self.clk_phase),
                 If(cg.done,
                     If(n == 0,
                         self.readable.eq(1),
@@ -185,7 +204,7 @@ class SPIMachine(Module):
                             self.clk_next.eq(0),
                             self.writable.eq(0),
                             If(self.clk_phase,
-                                self.cs_next.eq(0),
+                                #self.cs_next.eq(0),
                                 NextState("WAIT")
                             ).Else(
                                 NextState("POST")
@@ -205,6 +224,7 @@ class SPIMachine(Module):
         fsm.act("POST",
                 # dummy half cycle before deasserting CS in CPHA=0
                 cg.count.eq(1),
+                self.cs_next.eq(1),
                 If(cg.done,
                     NextState("WAIT")
                 )
@@ -214,6 +234,14 @@ class SPIMachine(Module):
                 If(cg.done,
                     NextState("IDLE")
                 ).Else(
-                    cg.count.eq(1)
+                    cg.count.eq(1),
+                    self.cs_next.eq(1)
                 )
         )
+        # fsm.act("END",
+        #         cg.count.eq(1),
+        #         self.cs_next.eq(1),#1
+        #         If(cg.done,
+        #             NextState("IDLE")
+        #         )
+        # )
