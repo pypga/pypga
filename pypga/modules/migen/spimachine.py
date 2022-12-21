@@ -33,6 +33,7 @@ class ClockGen(Module):
                     If(do_extend,
                         do_extend.eq(0)
                     ).Else(
+                        #
                         cnt.eq(self.div[1:]),
                         do_extend.eq(self.extend & self.div[0])
                     )
@@ -72,6 +73,7 @@ class Register(Module):
                 Cat(sr[1:], self.sdi),
                 Cat(self.sdi, sr[:-1])))
         ]
+        #
         self.sync += [
             If(self.shift,
                 sr.eq(self.pdi),
