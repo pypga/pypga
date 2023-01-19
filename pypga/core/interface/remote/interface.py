@@ -57,3 +57,84 @@ class RemoteInterface(BaseInterface):
         if self._extra_shell is not None:
             self._extra_shell.stop()
             self._extra_shell = None
+
+    def general_purpose_spi_readwrite(self, data: list[int], cpol: bool = True, cpha: bool = False, speed_hz: int = 1_000_000, spi_bus: int = 1, spi_dev: int = 0):
+        command = "python3 -c \""
+        command += "import spidev;"
+        command += "spi = spidev.SpiDev();"
+        command += f"spi.open({spi_bus},{spi_dev});"
+        command += f"spi.max_speed_hz={speed_hz};"
+        command += f"spi.mode={2 * int(cpol) + int(cpha)};"
+        command += f"reply=spi.xfer({data});"
+        command += "print('reply =', reply);"
+        command += "spi.close();"
+        command += "\""
+        self.extra_shell.read()  # purge any "old" data
+        result = self.extra_shell.ask(command)
+        timeout = time.time() + 1
+        while time.time() < timeout:
+            if "reply = [" in result:
+                break
+            time.sleep(0.01)
+            result += self.extra_shell.read()
+        else:
+            raise TimeoutError(f"Never received a good reply from SPI bus. {result}")
+        for line in result.splitlines():
+            if line.startswith("reply = ["):
+                break
+        else:
+            raise RuntimeError(f"Result from SPI bus cannot be parsed: {result}")
+        data = line.split("=", maxsplit=1)[1]
+        return [int(item) for item in data.strip(" []\n").split(", ")]
+
+    def general_purpose_i2c_write(self, i2c_addr: int, register: int, data: list[int]):
+        command = "python3 -c \""
+        command += "import smbus2;"
+        command += "i2c = smbus2.SMBus(0);"
+        command += f"reply=i2c.write_i2c_block_data({i2c_addr}, {register}, {data});"
+        command += "print('reply =', reply);"
+        command += "i2c.close();"
+        command += "\""
+        self.extra_shell.read()  # purge any "old" data
+        result = self.extra_shell.ask(command)
+        timeout = time.time() + 1
+        while time.time() < timeout:
+            if "reply = [" in result:
+                break
+            time.sleep(0.01)
+            result += self.extra_shell.read()
+        else:
+            raise TimeoutError(f"Never received a good reply from bus. {result}")
+        for line in result.splitlines():
+            if line.startswith("reply = ["):
+                break
+        else:
+            raise RuntimeError(f"Result from bus cannot be parsed: {result}")
+        data = line.split("=", maxsplit=1)[1]
+        return [int(item) for item in data.strip(" []\n").split(", ")]
+
+    def general_purpose_i2c_read(self, i2c_addr: int, register: int, length: int):
+        command = "python3 -c \""
+        command += "import smbus2;"
+        command += "i2c = smbus2.SMBus(0);"
+        command += f"reply=i2c.read_i2c_block_data({i2c_addr}, {register}, {length});"
+        command += "print('reply =', reply);"
+        command += "i2c.close();"
+        command += "\""
+        self.extra_shell.read()  # purge any "old" data
+        result = self.extra_shell.ask(command)
+        timeout = time.time() + 1
+        while time.time() < timeout:
+            if "reply = [" in result:
+                break
+            time.sleep(0.01)
+            result += self.extra_shell.read()
+        else:
+            raise TimeoutError(f"Never received a good reply from bus. {result}")
+        for line in result.splitlines():
+            if line.startswith("reply = ["):
+                break
+        else:
+            raise RuntimeError(f"Result from bus cannot be parsed: {result}")
+        data = line.split("=", maxsplit=1)[1]
+        return [int(item) for item in data.strip(" []\n").split(", ")]
