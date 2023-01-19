@@ -42,6 +42,8 @@ class TestMigenPid:
                 print(
                     f"Cycle {cycle:03d}: random_int={random_int} input_signal={(yield dut.input_signal)} error={(yield dut.error)} sum={(yield dut.sum)} out={(yield dut.out)}",
                 )
+                # expected = 0
+                # assert (yield dut.out) == expected
                 yield
 
         run_simulation(dut, assertions())
