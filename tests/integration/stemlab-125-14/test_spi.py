@@ -14,7 +14,6 @@ def SPI(width=24, cs_width=2):
     """Creates an SPI module in loopback configuration, i.e. MISO connected to MOSI."""
     class _SPI(TopModule):
         write_data: Register(default=0, width=width, readonly=False)
-        read_data: Register(default=0, width=width, readonly=True)
         start: TriggerRegister()
 
         _digital_outputs: Register(default=0, width=8, readonly=True)
@@ -49,8 +48,6 @@ def SPI(width=24, cs_width=2):
                 clock_phase=self.clock_phase,  # clock phase
                 lsb_first=False,  # send LSB rather than MSB first
             )
-            self.comb += self.spi.miso.eq(self.spi.mosi)  # havent tested miso yet
-            self.sync += self.read_data.eq(self.spi.read_data)
 
             self.submodules.pulseburst = MigenPulseBurstGen(
                 trigger=self.start,

@@ -78,10 +78,10 @@ class TestMigenSPI:
             for cycle in range(300):
                 yield dut._data.eq(next(data))
                 yield dut._start.eq(next(start))
-                yield dut.miso.eq(Constant(cycle%3%2))
+                # yield dut.miso.eq(Constant(cycle%3%2))  # was removed
                 print(
-                    f"Cycle {cycle:03d}: start={(yield dut._start)} clk={(yield dut.clk)} cs={(yield dut.cs):0{self.cs_width}b} mosi={(yield dut.mosi)} busy={(yield dut.busy)} cs_next={(yield dut.spi.cs_next)}",
-                    f"\ncount={(yield dut.spi.cg.count)} done={(yield dut.spi.cg.done)} extend={(yield dut.spi.cg.extend)} div={(yield dut.spi.cg.div)} length={(yield dut.spi.length)} reg.sdo={(yield dut.spi.reg.sdo)} reg.sdi={(yield dut.spi.reg.sdi)} reg.pdi={(yield dut.spi.reg.pdi):0{self.data_width}b} reg.load={(yield dut.spi.reg.load)} reg.shift={(yield dut.spi.reg.shift)} reg.pdo={(yield dut.spi.reg.pdo):0{self.data_width}b}\n"
+                    f"Cycle {cycle:03d}: start={(yield dut._start)} clk={(yield dut.clk)} cs={(yield dut.cs):0{self.cs_width}b} mosi={(yield dut.mosi)} busy={(yield dut.busy)}", 
+                    f"\ndone={(yield dut.spi.cg.done)} reg.sdo={(yield dut.spi.reg.sdo)} reg.shift={(yield dut.spi.reg.shift)} reg.pdo={(yield dut.spi.reg.pdo):0{self.data_width}b}\n"
                 )
                 yield
 
