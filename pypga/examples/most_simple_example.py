@@ -23,15 +23,3 @@ print(board.rate)
 
 board.rate = 5
 board.speed_up()
-
-
-
-class BlinkLED(TopModule):
-   rate: Register.custom(width=8)
-
-   @logic
-   def blink(self, platform):
-       self.counter = Signal(8)
-       self.sync += [self.counter.eq(self.counter + self.rate)]
-       self.sync += [platform.request("user_led").eq(self.counter[-1])]
-
