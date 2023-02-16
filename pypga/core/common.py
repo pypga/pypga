@@ -9,11 +9,15 @@ from .settings import settings
 
 class CustomizableMixin:
     """A mix-in to add a classmethod ``custom`` to any class."""
+    
+ 
+    # Leo: Return another class based on this class, named CustomCLASSNAME
+    # with some classvaruables already st
+    
     @classmethod
     def custom(cls, **kwargs):
         """Returns a subclass with all passed kwargs set as class attributes."""
         return type(f"Custom{cls.__name__}", (cls,), kwargs)
-
 
 @dataclass
 class CustomizableDataclassMixin:

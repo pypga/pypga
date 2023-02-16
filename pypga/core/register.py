@@ -305,4 +305,12 @@ NumberRegister = _NumberRegister.custom
 FixedPointRegister = _FixedPointRegister.custom
 
 
-# TODO: add explicit arguments to custom for type completion, or go with @dataclass for automatically doing this
+#Leo: can we somehow use dataclasses?
+
+from dataclasses import dataclass
+@dataclass
+class NewFixedPointRegister(_FixedPointRegister):
+    def test(self):
+        return self.min
+
+# TODO : Leo? add explicit arguments to custom for type completion, or go with @dataclass for automatically doing this
