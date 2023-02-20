@@ -20,8 +20,8 @@ from migen import Cat, Constant
 
 
 def DAQ(
-    data_depth: int = 1024,
-    data_width: int = 14,
+    data_depth: int = None,
+    data_width: int = None,
     data_decimals: int = 0,
     sampling_period_width: int = 32,
     default_sampling_period: int = 10,

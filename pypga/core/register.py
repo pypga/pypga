@@ -115,11 +115,10 @@ class _Register(CustomizableMixin):
         return f"{parents[0]}.{'_'.join(parents[1:] + [self.name])}_csr"
 
     def to_python(self, value):
-        value -= self.offset_from_python
-        return value
+        return value - self.offset_from_python
 
     def _to_python_array(self, value):
-        """Faster version of to_python() for arrays"""
+        """Faster version of to_python() for arrays can be implented here in subclasses"""
         return [self.to_python(v) for v in value]
 
     def from_python(self, value):
@@ -247,12 +246,12 @@ class _NumberRegister(_Register):
                 value -= 1 << self.width
         return int(value)
 
-    def _to_python_array(self, value):
-        value = np.asarray(value)
-        value -= self.offset_from_python
-        if self.signed:
-            value[value >= (1 << (self.width - 1))] -= 1 << self.width
-        return value
+    # TODO: Leo: Does not work
+    #def _to_python_array(self, value):
+    #    value = np.asarray(value) - self.offset_from_python
+    #    if self.signed:
+    #        value[value >= (1 << (self.width - 1))] -= 1 << self.width
+    #    return value
 
     def before_from_python(self, value):
         if self.max is not None and value > self.max:
