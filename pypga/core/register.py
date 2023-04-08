@@ -15,7 +15,7 @@ class _Register(CustomizableMixin):
         name_csr = f"{name}_csr"
         if self.ram_offset is not None:
             # nothing to do, the register is simply an area in RAM
-            pass
+            return
         value_signal = Signal(
             (self.width, self.signed), 
             reset=self.default if self.depth == 1 else 0, 
