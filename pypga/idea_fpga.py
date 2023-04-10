@@ -1,5 +1,13 @@
 """
 Sketch of a new Pypga API and class structure
+
+Ideas for restructering the pypga API  to
+* make it better understandable what happens with less magic
+* distiguish better between python and FPGA code
+* seperate single register / in-fpga array / memory DMA array
+* less attributes magically popping up somewhere
+* better code completion
+
 """
 #from dataclasses import dataclass
 from functools import partial, wraps
