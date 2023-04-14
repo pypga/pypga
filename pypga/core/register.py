@@ -15,22 +15,22 @@ class _Register(CustomizableMixin):
         name_csr = f"{name}_csr"
         if self.ram_offset is not None:
             # nothing to do, the register is simply an area in RAM
-            pass
+            return
         value_signal = Signal(
             (self.width, self.signed), 
             reset=self.default if self.depth == 1 else 0, 
             name=name,
         )
-        setattr(module, name, value_signal)
+        setattr(module, name, value_signal) #DOC: Set the register from the type hint with a migen signal
         if self.depth == 1:
             if self.readonly:
-                csr_instance = CSRStatus(
+                csr_instance = CSRStatus( #DOC: I can only read  this register
                     size=self.width, reset=self.default, name=name_csr
                 )
                 setattr(module, name_csr, csr_instance)
                 module.comb += csr_instance.status.eq(value_signal)
             else:
-                csr_instance = CSRStorage(
+                csr_instance = CSRStorage( #DOC: I can read and write this register
                     size=self.width, reset=self.default, name=name_csr
                 )
                 setattr(module, name_csr, csr_instance)
@@ -286,10 +286,10 @@ class _FixedPointRegister(_NumberRegister):
         value = float(value) / (2**self.decimals - 1)
         return value
 
-    def _to_python_array(self, value):
-        value = _NumberRegister._to_python_array(self, value)
-        value = np.array(value, dtype=float) / (2**self.decimals - 1)
-        return value
+    # def _to_python_array(self, value):
+    #     value = _NumberRegister._to_python_array(self, value)
+    #     #value = np.array(value, dtype=float) / (2**self.decimals - 1) #somehow this fixed it
+    #     return value
 
     def from_python(self, value):
         value = int(round(float(value) * (2**self.decimals - 1)))

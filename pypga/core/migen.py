@@ -5,6 +5,7 @@ import typing
 from misoc.interconnect.csr import AutoCSR, CSRStatus, CSRStorage
 
 from migen import If
+from migen import Case
 from migen import Module as MigenModule
 from migen import Signal
 from migen.build.generic_platform import GenericPlatform

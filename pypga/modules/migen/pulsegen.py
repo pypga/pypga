@@ -15,6 +15,9 @@ class MigenPulseGen(MigenModule):
         first_cycle_period_offset: int = 0,
     ):
         """
+        #DOC: Emits endless pulses
+        
+        
         Pulse generator that emits a pulse every ``period + 2`` clock cycles.
 
         Args:
@@ -68,6 +71,8 @@ class MigenPulseBurstGen(MigenModule):
         period: Union[Signal, int] = 0,
     ):
         """
+        #DOC: make n pulses, Emits after trigger : | | | | |
+        
         Pulse generator that a fixed number of pulses every ``period + 2`` clock cycles.
 
         Args:

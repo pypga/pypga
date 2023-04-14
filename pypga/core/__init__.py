@@ -2,7 +2,7 @@ from migen import Signal
 
 from .common import CustomizableMixin
 from .logic_function import is_logic, logic
-from .migen import If, MigenModule, Signal
+from .migen import If, MigenModule, Signal, Case
 from .module import Module, TopModule
 from .register import (
     BoolRegister,
