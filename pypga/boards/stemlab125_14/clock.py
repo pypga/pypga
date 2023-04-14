@@ -46,7 +46,7 @@ def create_stemlabs_clocks(module, platform):
             i_CLKIN2=0,
             i_CLKINSEL=1,
             i_PWRDWN=0,
-            p_CLKFBOUT_MULT=8,
+            p_CLKFBOUT_MULT=8, #Converts 125MHz to 1GHz
             p_CLKFBOUT_PHASE=0.0,
             o_CLKFBOUT=clk_feedback,
             i_CLKFBIN=clk_feedback_buffered,
@@ -85,9 +85,11 @@ def create_stemlabs_clocks(module, platform):
             o_CLKOUT5=clk_pwm,
         )
     ]
+    #Usually getx fondigured in lcock wizard in Vivado GUI
+    
     module.clock_domains.sys_ps = ClockDomain()
     module.clock_domains.clk_adc = ClockDomain()
-    module.clock_domains.clk_dac_1p = ClockDomain(reset_less=True)
+    module.clock_domains.clk_dac_1p = ClockDomain(reset_less=True) 
     module.clock_domains.clk_dac_2x = ClockDomain(reset_less=True)
     module.clock_domains.clk_dac_2p = ClockDomain(reset_less=True)
     module.clock_domains.clk_ser = ClockDomain(reset_less=True)
